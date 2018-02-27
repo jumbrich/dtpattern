@@ -4,14 +4,22 @@
 import sys
 import click
 
+from dtpattern.dtpattern import pattern
+
 
 @click.command()
-def main(args=None):
+@click.argument('items', nargs=-1)
+@click.option('--size', type=int)
+
+def main(items, size=1):
     """Console script for dtpattern."""
-    click.echo("Replace this message by putting your code into "
-               "dtpattern.cli.main")
-    click.echo("See click documentation at http://click.pocoo.org/")
-    return 0
+    click.echo("Item list {}".format(items))
+
+    res= pattern(items, size=1)
+
+    click.echo("Result: {}".format(res))
+
+
 
 
 if __name__ == "__main__":

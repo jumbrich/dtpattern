@@ -1,66 +1,73 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Tests for `dtpattern` package."""
-
-
 import unittest
-from click.testing import CliRunner
+import sys
 
-from dtpattern import dtpattern
-from dtpattern import cli
 from dtpattern.dtpattern import pattern
+from tests.value_pattern_types_list import random_number, random_date, random_time, random_iso8601, \
+    random_lowercase_string, random_word, random_words
 
 
-class TestDtpattern(unittest.TestCase):
-    """Tests for `dtpattern` package."""
+def for_examples(parameters):
 
+  def tuplify(x):
+    if not isinstance(x, tuple):
+      return (x,)
+    return x
+
+  def decorator(method, parameters=parameters):
+    for parameter in (tuplify(x) for x in parameters):
+
+      def method_for_parameter(self, method=method, parameter=parameter):
+        method(self, *parameter)
+      args_for_parameter = ",".join(repr(v) for v in parameter)
+      name_for_parameter = method.__name__ + "(" + args_for_parameter + ")"
+      frame = sys._getframe(1)  # pylint: disable-msg=W0212
+      frame.f_locals[name_for_parameter] = method_for_parameter
+    return None
+  return decorator
+
+##basic straight forward aggregation
+test_cols_aggregated=[
+    (random_number(10,digits=1, fix_len=True), '1'),
+    (random_number(10,digits=2, fix_len=True), '11'),
+    (random_number(10,digits=3, fix_len=True), '111'),
+    (random_number(10,digits=5, fix_len=True), '11111'),
+    ( random_number(2,digits=1, fix_len=True)+random_number(2,digits=2, fix_len=True), '01'),
+    (random_date(5), '1111-11-11'),
+    (random_time(5), '11:11:11'),
+    (random_iso8601(5), '1111-11-11C11:11:11'),
+    (random_lowercase_string(10, length=5),'ccccc'),
+    (random_lowercase_string(5, length=5)+random_lowercase_string(5, length=3),'aaccc'),
+    (random_word(10,length=5),'Ccccc'),
+    (random_word(5,length=5)+random_word(5,length=3),'Caacc'),
+    (random_words(10,length=[5,3]),'Ccccc Ccc'),
+    (random_words(5,length=[5,3])+random_words(5,length=[3,5]),'Caacc Caacc'),
+
+]
+
+#This cases are not that straight forward
+test_cols_aggregated_complex=[
+    ( [u'-1']+random_number(5,digits=1, fix_len=True), '[-]1'), # sometimes numbers contain a minus
+    ( [u'-1',u'+1']+random_number(5,digits=1, fix_len=True), '[-/+]1')
+]
+
+
+class TestFormatEncoder(unittest.TestCase):
     def setUp(self):
-        """Set up test fixtures, if any."""
+        self.f = pattern
 
-    def tearDown(self):
-        """Tear down test fixtures, if any."""
+    @for_examples(test_cols_aggregated)
+    def test_basic(self, x, y):
+        res=self.f(values=x)
+        self.assertEqual(res[0][0], y)
+        self.assertEqual(res[0][1], len(x))
 
-    def test__something(self):
-        """Test something."""
-        examples = [
-            # ['1','2','3','4','5','6',' '],
-            # ['-1', '+2', '-3', '4', '5', '6','-'],
-            # ['-1', '+2', '-3', '4', '5', '6'],
-            # ['Tim Tom', 'Ulf Uls', 'Max Maxi', 'Alf Also', 'C. A. Term', '123']
-            # make_pattern(10, fake.isbn10, separator='-'),
-            # make_pattern(10000, fake.uri)
-            # ['-1'] + random_number(5, digits=1, fix_len=True)
-            # ['-1', '+1'] + random_number(5, digits=1, fix_len=True)
-            # [fake.sentence(nb_words=6, variable_nb_words=True) for i in range(0,10)]
-            [u'43,462.33', u'30,166.00', u'35,618.00', u'38,356.90', u'77,764.00', u'106,421.00', u'385,895.25',
-             u'503,625.00', u'34,122.08', u'127,974.00', u'148,184.64', u'44,832.91', u'30,702.85', u'365,172.00',
-             u'92,107.78', u'33,589.13', u'5,448,814.11', u'496,835.21', u'34,170.00', u'449,064.18', u'1,250,000.00',
-             u'462,084.00', u'110,777.00', u'33,470.37', u'46,992.13', u'36,000.00', u'32,696.00', u'28,995.06',
-             u'68,691.00', u'25,645.77', u'113,913.43', u'106,228.20', u'34,055.72', u'27,809.00', u'137,004.08',
-             u'31,531.00', u'38,171.08', u'97,616.70', u'-3,389,597.00']
-        ]
+    @for_examples(test_cols_aggregated_complex)
+    def test_complex(self, x, y):
+        res = self.f(values=x)
+        self.assertEqual(res[0][0], y)
+        self.assertEqual(res[0][1], len(x))
 
-        for values in examples:
-            print("{}\n V: {}".format("=" * 80, values))
-            # p=translate_all(values, filter_empty=False)
-            # p = sorted(p, key=functools.cmp_to_key(pattern_comparator))
-            # print " {}\n P: {}".format("-" * 80,p)
-            # l1=l1_aggregate(p)
-            # print "  {}\n   L1: {}".format("." * 80, l1)
-            # l2 = l2_aggregate(patterns=p)
-            # print "   {}\n   L2: {}".format("'" * 80, l2)
-            # l3 = l3_aggregate(l2)
-            # print "   {}\n   L3: {}".format("'" * 80, l3)
-            a = pattern(values, size=3,verbose=True )
-            print("   {}\n  A: {}".format("'" * 80, a))
-
-    def test_command_line_interface(self):
-        """Test the CLI."""
-        runner = CliRunner()
-        result = runner.invoke(cli.main)
-        assert result.exit_code == 0
-        assert 'dtpattern.cli.main' in result.output
-        help_result = runner.invoke(cli.main, ['--help'])
-        assert help_result.exit_code == 0
-        assert '--help  Show this message and exit.' in help_result.output
+if __name__ == '__main__':
+    unittest.main()
