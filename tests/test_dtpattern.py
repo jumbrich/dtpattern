@@ -3,7 +3,9 @@
 import unittest
 import sys
 
-from dtpattern.dtpattern import pattern
+from dtpattern.dtpattern import pattern, aggregate_group_of_same_symbols
+from tests.value_lists import same_length_numbers, same_length_lowercase, same_length_uppercase, var_length_numbers, \
+    var_length_lowercase
 from tests.value_pattern_types_list import random_number, random_date, random_time, random_iso8601, \
     random_lowercase_string, random_word, random_words
 
@@ -56,8 +58,9 @@ test_cols_aggregated_complex=[
 class TestFormatEncoder(unittest.TestCase):
     def setUp(self):
         self.f = pattern
+        print(same_length_numbers)
 
-    @for_examples(test_cols_aggregated)
+    @for_examples(same_length_numbers)
     def test_basic(self, x, y):
         res=self.f(values=x)
         self.assertEqual(res[0][0], y)
@@ -68,6 +71,48 @@ class TestFormatEncoder(unittest.TestCase):
         res = self.f(values=x)
         self.assertEqual(res[0][0], y)
         self.assertEqual(res[0][1], len(x))
+
+class FixLengthSameSymbolTest(unittest.TestCase):
+
+    def _tester(self,input_tests,prefix):
+        for i,t in enumerate(input_tests):
+            with self.subTest(i=i):
+                print("{}{} {} -> {}".format(prefix,i,t[0],t[1]))
+                input=t[0]
+                res = pattern(values=input)
+                self.assertEqual(res[0][0], t[1])
+                self.assertEqual(res[0][1], len(input))
+
+    def test_numbers(self):
+        self._tester(same_length_numbers, 'N')
+
+    def test_lower(self):
+        self._tester(same_length_lowercase, 'L')
+
+    def test_upper(self):
+        self._tester(same_length_uppercase,'U')
+
+class VarLengthSameSymbolTest(unittest.TestCase):
+
+    def _tester(self,input_tests,prefix):
+        for i,t in enumerate(input_tests):
+            with self.subTest(i=i):
+                print("{}{} {} -> {}".format(prefix,i,t[0],t[1]))
+                input=t[0]
+                res = pattern(values=input)
+                self.assertEqual(res[0][0], t[1])
+                self.assertEqual(res[0][1], len(input))
+
+    def test_numbers(self):
+        self._tester(var_length_numbers, 'N')
+
+    def test_lower(self):
+        self._tester(var_length_lowercase, 'L')
+
+    #def test_upper(self):
+    #    self._tester(var_length_uppercase,'U')
+
+
 
 if __name__ == '__main__':
     unittest.main()

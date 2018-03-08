@@ -22,6 +22,10 @@ def random_number(size, digits=None, fix_len=False):
 def random_lowercase_string(size, length=10):
     return [ str(''.join(fake.random_sample(elements=(string.ascii_lowercase), length=length))) for i in range(0,size)]
 
+def random_uppercase_string(size, length=10):
+    return [ str(''.join(fake.random_sample(elements=(string.ascii_uppercase), length=length))) for i in range(0,size)]
+
+
 def random_word(size, length=10):
 
     return [str(''.join(fake.random_sample(elements=(string.ascii_uppercase), length=1)))+str(''.join(fake.random_sample(elements=(string.ascii_lowercase), length=length-1))) for i in
@@ -55,4 +59,7 @@ int_columns=[
 ]
 
 
+
+####
+###all values have same length and same character sets
 

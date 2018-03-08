@@ -7,20 +7,47 @@ import click
 from dtpattern.dtpattern import pattern
 
 
-@click.command()
+@click.group()
+def main():
+    """dtpattern cli , generate patterns for a set of values"""
+    pass
+
+@main.command()
 @click.argument('items', nargs=-1)
-@click.option('--size', type=int)
+@click.option('--size', type=int, default=1)
+@click.option('--raw', count=True)
+@click.option('-v', '--verbose', count=True)
+def items(items, verbose, raw, size):
+    """read values from cli"""
 
-def main(items, size=1):
-    """Console script for dtpattern."""
-    click.echo("Item list {}".format(items))
+    if verbose:
+        click.echo("Item list {}".format(items))
 
-    res= pattern(items, size=1)
+    res= pattern(items, size=1, includeCount=not raw, verbose=verbose)
 
-    click.echo("Result: {}".format(res))
+    if verbose:
+        click.echo("Result(s):")
+    for r in res:
+        click.echo(" {}".format(r))
 
+@main.command()
+@click.argument('file',  type=click.File('r'))
+@click.option('--size', type=int, default=1)
+@click.option('--raw', count=True)
+@click.option('-v', '--verbose', count=True)
+def file(file, verbose, raw, size):
+    """read values from a file"""
 
+    items=file.read().splitlines()
+    if verbose:
+        click.echo("Item list {}".format(items))
 
+    res= pattern(items, size=1, includeCount=not raw, verbose=verbose)
+
+    if verbose:
+        click.echo("Result(s):")
+    for r in res:
+        click.echo(" {}".format(r))
 
 if __name__ == "__main__":
     sys.exit(main())  # pragma: no cover

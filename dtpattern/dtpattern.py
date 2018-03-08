@@ -64,8 +64,8 @@ def make_trans_table_unicode(in_out):
 
 
 #### MASTER TRANS TABLE
+### code to translate characters/numbers/special characters to symbols
 all_table_unicode = make_trans_table_unicode(in_out2)
-
 
 def translate(input, trans_table=all_table_unicode):
     ''' use the unicode mapping'''
@@ -80,11 +80,10 @@ def translate_all(inputs, filter_empty=True, sort=True):
     return p
 
 
-### pattern to sorted unique list of its symbols
+### build string from sorted list of unique patterns
 def pattern_to_unique_symbols(pattern):
     ''' Builds for each set a sorted string with unique symbols'''
     return ''.join(sorted(list(set(pattern))))
-
 
 def patterns_to_unique_symbols(patterns):
     ''' Builds for each set a sorted string with unique symbols'''
@@ -99,12 +98,12 @@ def aggregate_group_of_same_symbols(patterns=None, values=None):
     if values is not None:
         patterns = translate_all(values)
 
+
     if patterns is None and values is None:
         raise ValueError("Either a list of patterns or values has to be supplied")
 
     symbols, p = None, None
-
-    for i, pattern in enumerate(patterns):
+    for pattern in patterns:
         if symbols is None:
             symbols = set(pattern)
         else:
@@ -519,8 +518,12 @@ def collapse(patterns):
         sym = ''.join([x for x in s if x in ALL])
         return '{{{}}}'.format(sym)
 
-def pattern(values, size=1, verbose=False):
+def pattern(values, size=1, verbose=False, includeCount=True):
     patterns = translate_all(values)
-    return aggregate_patterns(patterns, size=size, verbose=verbose, run=1)
+    res= aggregate_patterns(patterns, size=size, verbose=verbose, run=1)
+    if not includeCount:
+        return [ r[0] for r in res]
+    return res
+
 
 

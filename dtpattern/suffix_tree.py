@@ -1,5 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
+## code was extracted from https://github.com/ptrus/suffix-trees
+
+
 from __future__ import absolute_import, division, print_function, unicode_literals
 import struct
 import sys
