@@ -18,7 +18,8 @@ input_values=[str(i) for i in range(1,99)]
 input_values=['http://deri.org/','https://deri.com']
 
 data_lists=[
-    (['1','WW','131W','ac123ac','cb-d-','http://'],2),
+    (['111','222','Wien','Salzburg'],2),
+    #(['1','WW','131W','ac123ac','cb-d-','http://'],2),
     #random_time(10),
     #random_iso8601(10),
     #random_date(10),

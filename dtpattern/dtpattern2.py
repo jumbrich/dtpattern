@@ -310,10 +310,6 @@ class Alignment(object):
     def find_best_alignment(self, alpha_list, beta_list):
 
         aligns=align_global(alpha_list, beta_list, self.m, self.mm, self.go, self.ge)
-        #logger.info("Alingments {} {}".format(len(aligns), aligns))
-        #for a in aligns:
-        #    identity, score, align1, symbol2, align2 = finalize(*a)
-            #print(format_alignment2(identity, score, align1, symbol2, align2, indent=2))
 
         #TODO If we have several alignments, we might want to rank them on other features
         #if len(aligns)>1:
@@ -353,7 +349,13 @@ class Alignment(object):
         elif identity == 0:
             #no matching characters:
 
-            aligns = align_global(alpha_list, beta_list)
+            alpha_ct = []
+            for c in alpha_list:
+                if isinstance(c,str):
+                    alpha_ct.append([utils.translate(c)] )
+                else:
+                    alpha_ct.append(c)
+            aligns = align_global(alpha_ct, beta_list)
             #if len(aligns) == 1:
             #    import inspect
             #    logger.warning("MORE THAN ONE ALIGNMENT in {}".format(inspect.stack()[0][3]))
@@ -468,17 +470,27 @@ class PatternFinder(object):
                 # TODO: We need to decide at what stage we try to merge!!!
                 cur_identity=alignment.data['best']['identity']
                 self.compress_before(cur_identity)
-                pos, alignment = self.closest_pattern_to(ivpat)
-                logger.debug("Best alignment after compressing for input %s is for %s with ALIGN:%s", ivpat, self._patterns[pos],
-                             alignment.data['best'])
+
+                if self.free_slots():
+                    logger.debug("We have free slots after compressing: adding empty pattern %s", ivpat)
+                    self._patterns.append(ivpat)
+                    pos, alignment=None,None
+                else:
+                    logger.debug("No free slots for %s", ivpat)
+
+                    # find closest pattern -> returns pos and alignment
+                    pos, alignment = self.closest_pattern_to(ivpat)
+                    logger.debug("Best alignment after compressing for input %s is for %s with ALIGN:%s", ivpat, self._patterns[pos],
+                                 alignment.data['best'])
+
                 #pass
 
+            if pos and alignment:
+                p = self._patterns[pos]
 
-            p = self._patterns[pos]
+                p.update_with_alignment(alignment)
 
-            p.update_with_alignment(alignment)
-
-            self.compress_after(pos)
+                self.compress_after(pos)
 
 
         self._count+=1
