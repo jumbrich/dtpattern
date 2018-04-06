@@ -284,11 +284,15 @@ class Pattern(object):
 
 class Alignment(object):
 
-    def __init__(self, alpha, beta):
+    def __init__(self, alpha, beta, m=5, mm=-4, go=-15, ge=-1):
 
         self.alpha=alpha
         self.beta=beta
         self.data={}
+        self.m=m
+        self.mm=mm
+        self.go=go
+        self.ge=ge
         self.find_best_alignment( alpha.symbol, beta.symbol)
 
     def best(self):
@@ -305,7 +309,7 @@ class Alignment(object):
 
     def find_best_alignment(self, alpha_list, beta_list):
 
-        aligns=align_global(alpha_list, beta_list, 5, -4, -15, -1)
+        aligns=align_global(alpha_list, beta_list, self.m, self.mm, self.go, self.ge)
         #logger.info("Alingments {} {}".format(len(aligns), aligns))
         #for a in aligns:
         #    identity, score, align1, symbol2, align2 = finalize(*a)
@@ -377,6 +381,7 @@ class Alignment(object):
 
     def __repr__(self):
         s = "--ALIGNMENT: {} - {} --".format(repr(self.alpha), repr(self.beta))
+        s += "\n costs: m:{} mm:{} go:{} ge:{}".format(self.m,self.mm,self.go,self.ge)
         for key, v in self.data.items():
             identity, score, align1, symbol, align2= v['identity'],v['score'],v['align1'],v['symbol'],v['align2']
             s+="\n {}\n{}".format(key,format_alignment2(identity, score, align1, symbol, align2, indent=2))
@@ -384,7 +389,7 @@ class Alignment(object):
         return s
 
     def __str__(self):
-        s="--ALIGNMENT: {} - {} --".format(self.alpha, self.beta)
+        s="--ALIGNMENT({},{},{},{}): {} - {} --".format(self.m,self.mm,self.go,self.ge,self.alpha, self.beta)
         for key, v in self.data.items():
             identity, score, align1, symbol, align2= v['identity'],v['score'],v['align1'],v['symbol'],v['align2']
             s+=" \n[{:^8}] ident: {:6.2f} score: {:>3} SYM: {}".format(key, identity, score, symbol)
@@ -489,6 +494,11 @@ class PatternFinder(object):
         :param identity:
         :return:
         """
+
+        if len(self._patterns) == 1:
+            logger.debug("[COMP_BEFORE] Only one pattern, Nothing to compress")
+            return
+        logger.debug("[COMP_BEFORE] Check if we can compress pattern groups")
 
         def compare_patterns(a,b):
             return len(a[1].symbol) - len(b[1].symbol)

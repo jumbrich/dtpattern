@@ -5,7 +5,7 @@ import sys
 import click
 from contexttimer import Timer
 
-from dtpattern.dtpattern2 import PatternFinder
+from dtpattern.dtpattern2 import PatternFinder, Alignment, Pattern
 
 
 @click.group()
@@ -27,12 +27,12 @@ def alignpair(s1, s2, verbose,  m, mm, go, ge):
     click.echo("INPUT s2: {}".format(s2))
     s1,s2 = [ c for c in s1], [ c for c in s2]
 
-    from dtpattern.alignment import alignment_list as al
-    aligns=al.align_global(s1,s2, m, mm, go, ge)
-    click.echo("Found {} alignment(s)".format(len(aligns)))
-    for a in aligns:
-        identity, score, align1, symbol, align2 = al.finalize(*a)
-        click.echo(al.format_alignment2(identity, score, align1, symbol, align2, indent=2))
+
+    a= Alignment(Pattern(s1),Pattern(s2),  m, mm, go, ge)
+    if verbose:
+        click.echo(repr(a))
+    else:
+        click.echo(a)
 
 
 @dtpattern2.command()
