@@ -11,7 +11,6 @@ test_cols_aggregated=[
     #(random_word(5,length=5)+random_word(5,length=3),'Caacc'),
     #(random_words(10,length=[5,3]),'Ccccc Ccc'),
     #(random_words(5,length=[5,3])+random_words(5,length=[3,5]),'Caacc Caacc'),
-
 ]
 
 def number_map(l=10, count=10):

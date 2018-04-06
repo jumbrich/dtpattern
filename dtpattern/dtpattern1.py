@@ -270,7 +270,7 @@ def l3_aggregate(L2, len_patterns, ind=0, verbose=False, run=1, max_presub_runs=
 
     s_p = l3_shared_groups(L2, ind=ind, verbose=verbose)
     if len(s_p) != 1:
-        if len(L2) > 5:  # len(L2)/float(len(patterns)) >0.01 or
+        if len(L2) > 5:   # len(L2)/float(len(patterns)) >0.01 or
             # we do not have any hope to aggregate the L2 patterns in a meaningful way
             # lets do some quick heuristics if there is any chance
 
@@ -510,7 +510,7 @@ def aggregate_patterns(patterns, size=1, verbose=False, ind=0, run=1):
 
 
 def collapse(patterns):
-    if len(patterns) < 3:
+    if len(patterns) < 5:
         sym = '/'.join(patterns)
         return sym
     else:

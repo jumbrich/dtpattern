@@ -33,13 +33,11 @@ def random_word(size, length=10):
 
 def random_isbn13(size, separator='-'):
     return [ str(fake.isbn13(separator=separator)) for i in range(0,size) ]
-#def random_isbn10(size, separator='-'):
-#    return [ str(fake.isbn10(separator=separator)) for i in range(0,size)]
 
 def random_isbn10(size, separator='-'):
     return make_pattern(size, fake.isbn10, separator=separator)
 
-def make_pattern(size, f,**fargs):
+def make_pattern(size, f, **fargs):
     return [str(f(**fargs)) for i in range(0, size)]
 
 

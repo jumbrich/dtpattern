@@ -1,53 +1,42 @@
 # -*- coding: utf-8 -*-
 
-"""Console script for dtpattern."""
+"""Console script for tablerec."""
 import sys
 import click
+import logging
+import logging.config
 
-from dtpattern.dtpattern import pattern
+from dtpattern import defaultConf,debugConf,fileConf, infoConf
+from dtpattern.services.cli_dtpattern import dtpattern
+from dtpattern.services.cli_dtpattern2 import dtpattern2
 
+
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.group()
-def main():
-    """dtpattern cli , generate patterns for a set of values"""
+#@click.command(context_settings=CONTEXT_SETTINGS)
+@click.option('--log', default='default', type=click.Choice(['default','info','debug', 'file']))
+@click.option('--logconf', type=click.Path(), help="specify a log config")
+def main(log, logconf):
+    click.echo(logconf)
+
+    if log=='default':
+        logging.config.dictConfig(defaultConf)
+    elif log=="debug":
+        logging.config.dictConfig(debugConf)
+    elif log=="info":
+        logging.config.dictConfig(infoConf)
+    elif log=="file":
+        logging.config.dictConfig(fileConf)
+
+    if logconf:
+        logging.config.fileConfig(logconf)
+
     pass
 
-@main.command()
-@click.argument('items', nargs=-1)
-@click.option('--size', type=int, default=1)
-@click.option('--raw', count=True)
-@click.option('-v', '--verbose', count=True)
-def items(items, verbose, raw, size):
-    """read values from cli"""
+main.add_command(dtpattern)
+main.add_command(dtpattern2)
 
-    if verbose:
-        click.echo("Item list {}".format(items))
-
-    res= pattern(items, size=1, includeCount=not raw, verbose=verbose)
-
-    if verbose:
-        click.echo("Result(s):")
-    for r in res:
-        click.echo(" {}".format(r))
-
-@main.command()
-@click.argument('file',  type=click.File('r'))
-@click.option('--size', type=int, default=1)
-@click.option('--raw', count=True)
-@click.option('-v', '--verbose', count=True)
-def file(file, verbose, raw, size):
-    """read values from a file"""
-
-    items=file.read().splitlines()
-    if verbose:
-        click.echo("Item list {}".format(items))
-
-    res= pattern(items, size=1, includeCount=not raw, verbose=verbose)
-
-    if verbose:
-        click.echo("Result(s):")
-    for r in res:
-        click.echo(" {}".format(r))
 
 if __name__ == "__main__":
     sys.exit(main())  # pragma: no cover
