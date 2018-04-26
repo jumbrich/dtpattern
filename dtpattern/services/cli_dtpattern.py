@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """Console script for dtpattern."""
-import sys
+
 import click
 
 from dtpattern.dtpattern1 import pattern

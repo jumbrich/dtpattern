@@ -7,7 +7,8 @@ import logging
 import logging.config
 
 from dtpattern import defaultConf,debugConf,fileConf, infoConf
-from dtpattern.services.cli_dtpattern import dtpattern
+
+from dtpattern.services.cli_dtpattern import dtpattern as dtpattern1
 from dtpattern.services.cli_dtpattern2 import dtpattern2
 
 
@@ -34,7 +35,7 @@ def main(log, logconf):
 
     pass
 
-main.add_command(dtpattern)
+main.add_command(dtpattern1)
 main.add_command(dtpattern2)
 
 
