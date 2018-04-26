@@ -4,8 +4,20 @@ from __future__ import print_function
 import warnings
 
 from dtpattern.alignment.utils import translate
+from dtpattern.timer import timer, Timer
 
 MAX_ALIGNMENTS = 1000   # maximum alignments recovered in traceback
+
+from multipledispatch import dispatch
+
+
+score_matrix={
+    'match':5,
+    'mismatch':-4,
+    'csetmatch':1,
+    'optional_match':1
+
+}
 
 class identity_match2(object):
     """Create a match function for use in an alignment.
@@ -14,67 +26,111 @@ class identity_match2(object):
     or unequal.  By default, match is 1 and mismatch is 0.
     """
 
-    def __init__(self, match=1, mismatch=0, csetmatch=1):
+    def __init__(self, match=1, mismatch=0, csetmatch=1, optional_match=1):
         """Initialize the class."""
         self.match = match
         self.mismatch = mismatch
         self.csetmatch = csetmatch
+        self.optional_match=optional_match
 
-    def __call__(self, alpha, beta):
 
+    @dispatch(str,str)
+    def identity_score(self, alpha, beta):
+        return self.match if alpha == beta else self.mismatch
 
-        """Call a match function instance already created."""
-        if isinstance(alpha, str) and isinstance(beta, str):
-            if alpha == beta:
-                return self.match
-        elif isinstance(alpha, list) and isinstance(beta, list):
-            if set(beta) < set(alpha):
-                return self.match
-        elif isinstance(alpha, tuple) and isinstance(beta, tuple):
-            ## assume for now that tuples have only one element and same length
-            if alpha[0] == beta[0]:
-                return self.match
-
-        ## str vs list
-        elif isinstance(alpha, str) and  isinstance(beta, list):
-            sym = translate(alpha)
-            if sym in beta:
+    @dispatch(list, list)
+    def identity_score(self, alpha, beta):
+        s_a, s_b=set(alpha), set(beta)
+        if len(s_a)> len(s_b):
+            if s_b < s_a:
                 return self.csetmatch
-        elif isinstance(alpha, list) and isinstance(beta, str):
-            sym = translate(beta)
-            if sym in alpha:
+        else:
+            if s_a < s_b:
                 return self.csetmatch
-
-        # str vs tuple
-        elif isinstance(alpha, str) and  isinstance(beta, tuple):
-            sym = translate(alpha)
-            if len(sym)>0 and sym in beta[0]:
-                return self.csetmatch
-        elif isinstance(alpha, tuple) and isinstance(beta, str):
-            sym = translate(beta)
-            if len(sym)>0 and sym in alpha[0]:
-                return self.csetmatch
-
-        # list vs tuple
-        elif isinstance(alpha, list) and isinstance(beta, tuple):
-            if set([c for c in beta[0]]) < set(alpha):
-                return self.match
-        elif isinstance(alpha, tuple) and isinstance(beta, list):
-            if set(beta) < set([c for c in alpha[0]]):
-                return self.match
-
         return self.mismatch
 
 
+    @dispatch(tuple, tuple)
+    def identity_score(self, alpha, beta):
+        score = self.identity_score(alpha[0], beta[0])
+        return score - 1 if score > 0 else score
+
+    @dispatch(str, list)
+    def identity_score(self, alpha, beta):
+        return self.csetmatch if translate(alpha) in beta else self.mismatch
 
 
-def align_global(s1,s2, match=5, mismatch=4, open=-15, extend=-1 ):
+    @dispatch(list, str)
+    def identity_score(self, alpha, beta):
+        return self.csetmatch if translate(beta) in alpha else self.mismatch
+
+    ##OPTIONAL PATTERNS
+    @dispatch(object, tuple)
+    def identity_score(self, alpha, beta):
+        score= self.identity_score(alpha, beta[0])
+        return score-1 if score >0 else score
+
+    @dispatch(tuple, object)
+    def identity_score(self, alpha, beta):
+        score= self.identity_score(alpha[0], beta)
+        return score - 1 if score > 0 else score
+
+    def __call__(self, alpha, beta):
+        score= self.identity_score(alpha,beta)
+        return score
+
+        # """Call a match function instance already created."""
+        # if isinstance(alpha, str) and isinstance(beta, str):
+        #     if alpha == beta:
+        #         return self.match
+        # elif isinstance(alpha, list) and isinstance(beta, list):
+        #     if set(beta) < set(alpha):
+        #         return self.match
+        # elif isinstance(alpha, tuple) and isinstance(beta, tuple):
+        #     ## assume for now that tuples have only one element and same length
+        #     if alpha[0] == beta[0]:
+        #         return self.match
+        #
+        # ## str vs list
+        # elif isinstance(alpha, str) and  isinstance(beta, list):
+        #     sym = translate(alpha)
+        #     if sym in beta:
+        #         return self.csetmatch
+        # elif isinstance(alpha, list) and isinstance(beta, str):
+        #     sym = translate(beta)
+        #     if sym in alpha:
+        #         return self.csetmatch
+        #
+        # # str vs tuple
+        # elif isinstance(alpha, str) and  isinstance(beta, tuple):
+        #     sym = translate(alpha)
+        #     if len(sym)>0 and sym in beta[0]:
+        #         return self.csetmatch
+        # elif isinstance(alpha, tuple) and isinstance(beta, str):
+        #     sym = translate(beta)
+        #     if len(sym)>0 and sym in alpha[0]:
+        #         return self.csetmatch
+        #
+        # # list vs tuple
+        # elif isinstance(alpha, list) and isinstance(beta, tuple):
+        #     if set([c for c in beta[0]]) < set(alpha):
+        #         return self.match
+        # elif isinstance(alpha, tuple) and isinstance(beta, list):
+        #     if set(beta) < set([c for c in alpha[0]]):
+        #         return self.match
+        #
+        # return self.mismatch
+
+
+
+@timer(key='align_global')
+def align_global(s1,s2, match=5, csetmatch=4, optional_match=4, mismatch=4, gapopen=-15, gapextend=-1 ):
     pe=0
     default_params = [
         ('sequenceA', s1),('sequenceB',s2),
-        ('match_fn', identity_match2(match, mismatch, match-1)),
-        ('gap_A_fn', affine_penalty(open, extend, pe)),
-        ('gap_B_fn', affine_penalty(open, extend, pe)),
+        ('match_fn', identity_match2(match=match, mismatch=mismatch, csetmatch=csetmatch,optional_match=optional_match)),
+        ('gap_A_fn', affine_penalty(gapopen, gapextend, pe)),
+        ('gap_B_fn', affine_penalty(gapopen, gapextend, pe)),
         ('penalize_extend_when_opening', 0),
         ('penalize_end_gaps', True),
         ('align_globally', True),
@@ -295,7 +351,7 @@ alignment occurs.
 
 align = align()
 
-
+@timer(key='_align')
 def _align(sequenceA, sequenceB, match_fn, gap_A_fn, gap_B_fn,
            penalize_extend_when_opening, penalize_end_gaps,
            align_globally, gap_char, force_generic, score_only,
@@ -322,16 +378,17 @@ def _align(sequenceA, sequenceB, match_fn, gap_A_fn, gap_B_fn,
     if not align_globally and (penalize_end_gaps[0] or penalize_end_gaps[1]):
         warnings.warn('"penalize_end_gaps" should not be used in local '
                       'alignments. The resulting score may be wrong.',
-                      BiopythonWarning)
+                      ValueError)
 
     if (not force_generic) and isinstance(gap_A_fn, affine_penalty) \
        and isinstance(gap_B_fn, affine_penalty):
         open_A, extend_A = gap_A_fn.open, gap_A_fn.extend
         open_B, extend_B = gap_B_fn.open, gap_B_fn.extend
-        matrices = _make_score_matrix_fast(
-            sequenceA, sequenceB, match_fn, open_A, extend_A, open_B,
-            extend_B, penalize_extend_when_opening, penalize_end_gaps,
-            align_globally, score_only)
+        with Timer(key="_score_fast"):
+            matrices = _make_score_matrix_fast(
+                sequenceA, sequenceB, match_fn, open_A, extend_A, open_B,
+                extend_B, penalize_extend_when_opening, penalize_end_gaps,
+                align_globally, score_only)
     else:
         matrices = _make_score_matrix_generic(
             sequenceA, sequenceB, match_fn, gap_A_fn, gap_B_fn,
@@ -374,7 +431,7 @@ def _align(sequenceA, sequenceB, match_fn, gap_A_fn, gap_B_fn,
                                          gap_A_fn, reverse=True)
     return alignments
 
-
+@timer(key='_m_score_matrix')
 def _make_score_matrix_generic(sequenceA, sequenceB, match_fn, gap_A_fn,
                                gap_B_fn, penalize_end_gaps, align_globally,
                                score_only):
@@ -472,7 +529,7 @@ def _make_score_matrix_generic(sequenceA, sequenceB, match_fn, gap_A_fn,
 
     return score_matrix, trace_matrix
 
-
+@timer(key='_m_score_fast')
 def _make_score_matrix_fast(sequenceA, sequenceB, match_fn, open_A, extend_A,
                             open_B, extend_B, penalize_extend_when_opening,
                             penalize_end_gaps, align_globally, score_only):
@@ -601,7 +658,7 @@ def _make_score_matrix_fast(sequenceA, sequenceB, match_fn, open_A, extend_A,
 
     return score_matrix, trace_matrix
 
-
+@timer(key='_rec_align')
 def _recover_alignments(sequenceA, sequenceB, starts, score_matrix,
                         trace_matrix, align_globally, gap_char,
                         one_alignment_only, gap_A_fn, gap_B_fn, reverse=False):
@@ -1044,11 +1101,11 @@ def to_string(s):
         _s_+=",".join([to_string(c) for c in s])
         #for c in s:
         #    _s_ += to_string(c)
-        if len(s)==1:
-            _s_ = '$'+_s_.replace("'","")
+        #if len(s)==1:
+        #    _s_ = '$'+_s_.replace("'","")
         return _s.format(_s_)
     if isinstance(s, tuple):
-        return "${}{{{},{}}}".format(s[0],s[1],s[2])
+        return "{}{{{},{}}}".format(s[0],s[1],s[2])
 
 def format_alignment2(identity, score, align1, symbol, align2, indent=1):
 
@@ -1124,12 +1181,13 @@ def format_alignment(align1, align2, score, begin, end):
 # then throw a warning and use the pure Python implementations.
 # The redefinition is deliberate, thus the no quality assurance
 # flag for when using flake8:
+
 try:
-    from .cpairwise2 import rint, _make_score_matrix_fast  # noqa
+    from Bio.cpairwise2 import rint, _make_score_matrix_fast  # noqa
 except ImportError:
     pass
-    #warnings.warn('Import of C module failed. Falling back to pure Python ' +
-    #              'implementation. This may be slooow...')
+    warnings.warn('Import of C module failed. Falling back to pure Python ' +
+                  'implementation. This may be slooow...')
 
 
 

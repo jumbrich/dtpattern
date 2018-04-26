@@ -2,19 +2,22 @@ import functools
 import heapq
 from enum import Enum
 from operator import itemgetter
+from dtpattern.alignment.merge import merge
 
-from contexttimer import Timer
 
 from dtpattern.alignment.alignment_list import align_global,finalize, format_alignment2
 from dtpattern.alignment import utils
-
+from dtpattern.alignment.utils import indent
+from dtpattern.timer import Timer, timer
 import logging
 logger = logging.getLogger(__name__)
+
 
 
 @functools.total_ordering
 class Pattern(object):
 
+    @timer(key='patinit')
     def __init__(self, value:str, topk=3):
         self.symbol = [ c for c in value ]
         self._count = 1
@@ -68,13 +71,12 @@ class Pattern(object):
             #print(self._vcounts[pos],d)
             self._vcounts[pos]=d
 
-
+    @timer(key='update_symbol')
     def update_symbol(self, symbol, beta_counts=None):
-        logger.debug("Merging alignment {} into {}".format(symbol, self))
+        logger.debug("[MERGE] Merging alignment {} into {}".format(symbol, self))
         m=[]
 
         if beta_counts is not None:
-            print()
             pass
 
         a_i = 0
@@ -114,55 +116,58 @@ class Pattern(object):
                             opt = a2
                             if isinstance(opt, str):
                                 self.update_counts(i,opt)
-                                opt = utils.translate(opt)
+                                #opt = utils.translate(opt)
                             elif isinstance(opt, tuple):
                                 opt = opt[0]
                             m.append((opt, 0, 1))
                         else:
                             opt = a1
-                            if isinstance(opt, str):
-                                opt = utils.translate(opt)
-                            elif isinstance(opt, tuple):
+                            if isinstance(opt, tuple):
                                 opt = opt[0]
                             m.append((opt, 0, 1))
                             self.update_counts(i, None)
-                    elif isinstance(a1, str) and isinstance(a2, str):
-                        # update vcounts
-                        t = [utils.translate(a1), utils.translate(a2)]
-                        m.append(list(set(t)))
-                        self.update_counts(i, a1)
-                        self.update_counts(i, a2)
-                    elif isinstance(a1, list) and isinstance(a2, str):
-                        # we keep the a2 value in the freq dict,
-                        # but need to merge the symbol
-                        t = [utils.translate(a2)]
-                        m.append(list(set(a1 + t)))
-                        self.update_counts(i, a2)
-                    elif isinstance(a1, str) and isinstance(a2, list):
-                        # we keep the a2 value in the freq dict,
-                        # but need to merge the symbol
-                        t = [utils.translate(a1)]
-                        m.append(list(set(a2 + t)))
-                    elif isinstance(a1, tuple) and isinstance(a2, str):
-                        # we keep the a2 value in the freq dict,
-                        # but need to merge the symbol
-
-                        t = utils.translate(a2)
-                        if t not in a1[0]:
-                            if isinstance(a1[0], list):
-                                a1[0].append(t)
-                                a1=(a1[0],a1[1],a1[2])
-                            else:
-                                a1 = (a1[0]+t, a1[1], a1[2])
-                        m.append(a1)
-                        self.update_counts(i, a2)
+                    else:
+                        _m = merge(a1,a2)
+                        m.append(_m)
+                    # elif isinstance(a1, str) and isinstance(a2, str):
+                    #     # update vcounts
+                    #     t = [utils.translate(a1), utils.translate(a2)]
+                    #     m.append(list(set(t)))
+                    #     self.update_counts(i, a1)
+                    #     self.update_counts(i, a2)
+                    # elif isinstance(a1, list) and isinstance(a2, str):
+                    #     # we keep the a2 value in the freq dict,
+                    #     # but need to merge the symbol
+                    #     t = [utils.translate(a2)]
+                    #     m.append(list(set(a1 + t)))
+                    #     self.update_counts(i, a2)
+                    # elif isinstance(a1, str) and isinstance(a2, list):
+                    #     # we keep the a2 value in the freq dict,
+                    #     # but need to merge the symbol
+                    #     t = [utils.translate(a1)]
+                    #     m.append(list(set(a2 + t)))
+                    # elif isinstance(a1, tuple) and isinstance(a2, str):
+                    #     # we keep the a2 value in the freq dict,
+                    #     # but need to merge the symbol
+                    #
+                    #     a10 = a1[0]
+                    #     if isinstance(a1[0], list):
+                    #         a10 = "".join(a10)
+                    #     t = utils.translate(a2)
+                    #     if t not in a10:
+                    #         a10 += t
+                    #
+                    #     a1 = (a10, a1[1], a1[2])
+                    #     m.append(a1)
+                    #     self.update_counts(i, a2)
+                    # elif  isinstance(a2, str):
+                    #     logger.fatal("What is going on here")
 
         self.symbol = m
         self._count += 1
-        logger.debug("Result of Merging alignment is: %s",self)
+        logger.debug("[MERGED] Result of Merging alignment is: %s",self)
 
-
-
+    @timer(key='_serialse')
     def _serialise(self):
         s=""
         _is_string=False
@@ -190,7 +195,12 @@ class Pattern(object):
                 #if l[2]==1:
                 #    s += "{}*".format(l[0])
                 #else:
-                s += "{{{},{},{}}}".format(l[0],l[1],l[2])
+                if isinstance(l[0], list):
+                    sl = "[{0}]".format(','.join(map(str, l[0])))
+                else:
+                    sl = l[0]
+
+                s += "{}{{{},{}}}".format(sl,l[1],l[2])
 
             if _is_string:
                 s+=l
@@ -199,6 +209,7 @@ class Pattern(object):
             s += "'"
         return s
 
+    @timer(key='_compact')
     def _compact(self):
 
         it=iter(self.symbol)
@@ -250,9 +261,23 @@ class Pattern(object):
                             break
                         _prev=l
                     if _c ==1:
-                        _s_ = "{}*".format(_prev[0])
+                        if isinstance(_prev[0], list):
+                            if len(_prev[0])==1:
+                                sl = "{0}".format(','.join(map(str, _prev[0])))
+                            else:
+                                sl = "[{0}]".format(','.join(map(str, _prev[0])))
+                        else:
+                            sl=_prev[0]
+                        _s_ = "{}?".format(sl)
                     else:
-                        _s_ = "{{{},{},{}}}".format(_prev[0],_prev[1],_c)
+                        if isinstance(_prev[0], list):
+                            if len(_prev[0])==1:
+                                sl = "{0}".format(','.join(map(str, _prev[0])))
+                            else:
+                                sl = "[{0}]".format(','.join(map(str, _prev[0])))
+                        else:
+                            sl=_prev[0]
+                        _s_ = "{{{},{},{}}}".format(sl,_prev[1],_c)
 
                 _s+=_s_
             except StopIteration:
@@ -284,14 +309,17 @@ class Pattern(object):
 
 class Alignment(object):
 
-    def __init__(self, alpha, beta, m=5, mm=-4, go=-15, ge=-1):
+    @timer("Alignment_init")
+    def __init__(self, alpha, beta, m=5, mm=-4, om=3, csetm=4,go=-15, ge=-1):
 
         self.alpha=alpha
         self.beta=beta
         self.data={}
         self.m=m
         self.mm=mm
+        self.om=om
         self.go=go
+        self.csetm=csetm
         self.ge=ge
         self.find_best_alignment( alpha.symbol, beta.symbol)
 
@@ -307,9 +335,19 @@ class Alignment(object):
                 r.append(c)
         return r
 
+    @timer(key='best_align')
     def find_best_alignment(self, alpha_list, beta_list):
 
-        aligns=align_global(alpha_list, beta_list, self.m, self.mm, self.go, self.ge)
+        score_matrix={
+            'match':self.m,
+            'csetmatch':self.csetm,
+            'optional_match':self.om,
+            'mismatch': self.mm,
+            'gapopen':self.go,
+            'gapextend':self.ge
+        }
+
+        aligns=align_global(alpha_list, beta_list, **score_matrix)
 
         #TODO If we have several alignments, we might want to rank them on other features
         #if len(aligns)>1:
@@ -338,7 +376,7 @@ class Alignment(object):
                         else:
                             alpha_ct.append(symbol2[i][0])
             if ctrans:
-                aligns = align_global(alpha_ct, beta_list)
+                aligns = align_global(alpha_ct, beta_list,match=self.m, csetmatch=self.m, mismatch=self.mm, gapopen=self.go, gapextend=self.ge)
                 identity, score, align1, symbol2, align2 = finalize(*aligns[0])
 
                 self.data['partl1'] = {
@@ -353,9 +391,14 @@ class Alignment(object):
             for c in alpha_list:
                 if isinstance(c,str):
                     alpha_ct.append([utils.translate(c)] )
+                elif isinstance(c, tuple):
+                    if isinstance(c[0], str):
+                        alpha_ct.append(([utils.translate(c[0])], c[1],c[2]))
+                    else:
+                        alpha_ct.append(c)
                 else:
                     alpha_ct.append(c)
-            aligns = align_global(alpha_ct, beta_list)
+            aligns = align_global(alpha_ct, beta_list, match=self.m, csetmatch=self.m, mismatch=self.mm, gapopen=self.go, gapextend=self.ge)
             #if len(aligns) == 1:
             #    import inspect
             #    logger.warning("MORE THAN ONE ALIGNMENT in {}".format(inspect.stack()[0][3]))
@@ -398,11 +441,11 @@ class Alignment(object):
 
         return s
 
-def merge(pattern, alignment):
-
-    pattern.update_symbol(alignment.data['best']['symbol'])
-
-    return pattern
+#def merge(pattern, alignment):
+#
+#    pattern.update_symbol(alignment.data['best']['symbol'])
+#
+#    return pattern
 
 
 def compare(item1, item2):
@@ -447,53 +490,59 @@ class PatternFinder(object):
         self._max_patterns=max_pattern
         self._patterns = []
         self._count=0
+        self._value_length=set([])
+        self._char_count={}
         self.compress_strategy = CompressStrategy.ALL_AFTER
 
     def free_slots(self):
         return len(self._patterns)<self._max_patterns
 
     def add(self, value):
-        logger.debug("[%s] Adding value: %s", 'add', value)
+        logger.debug("{:-^30}".format(' ADD NEW '))
+        logger.debug(" [%s] Adding value: %s", 'add', value)
 
         ivpat = Pattern(value)
         if self.free_slots():
-            logger.debug("We have free slots: adding empty pattern %s",ivpat)
+            logger.debug(" We have free slots: adding empty pattern %s",ivpat)
             self._patterns.append( ivpat )
         else:
-            logger.debug("No free slots for %s", ivpat)
+            logger.debug(" No free slots for %s", ivpat)
 
             #find closest pattern -> returns pos and alignment
             pos, alignment = self.closest_pattern_to(ivpat)
-            logger.debug("Best alignment for input %s is for %s with ALIGN:%s", ivpat, self._patterns[pos],
-                         alignment.data['best'])
+            logger.debug(" [BEST ALIGNMENT] Best alignment for %s is %s with ALIGN:%s", ivpat, self._patterns[pos], alignment.data['best'])
             if alignment.data['best']['identity'] != 100:
                 # TODO: We need to decide at what stage we try to merge!!!
                 cur_identity=alignment.data['best']['identity']
                 self.compress_before(cur_identity)
 
                 if self.free_slots():
-                    logger.debug("We have free slots after compressing: adding empty pattern %s", ivpat)
+                    logger.debug(" We have free slots after compressing: adding empty pattern %s", ivpat)
                     self._patterns.append(ivpat)
                     pos, alignment=None,None
                 else:
-                    logger.debug("No free slots for %s", ivpat)
+                    logger.debug(" No free slots for %s", ivpat)
 
                     # find closest pattern -> returns pos and alignment
                     pos, alignment = self.closest_pattern_to(ivpat)
-                    logger.debug("Best alignment after compressing for input %s is for %s with ALIGN:%s", ivpat, self._patterns[pos],
+                    logger.debug(" Best alignment after compressing for input %s is for %s with ALIGN:%s", ivpat, self._patterns[pos],
                                  alignment.data['best'])
 
                 #pass
 
-            if pos and alignment:
+            if pos is not None and alignment:
                 p = self._patterns[pos]
 
                 p.update_with_alignment(alignment)
 
                 self.compress_after(pos)
 
-
+        self._value_length.add(len(value))
+        for c in value:
+            self._char_count.setdefault(c,0)
+            self._char_count[c]+=1
         self._count+=1
+        logger.debug("--> %s", self)
 
     def compress_before(self, identity):
         """
@@ -510,7 +559,7 @@ class PatternFinder(object):
         if len(self._patterns) == 1:
             logger.debug("[COMP_BEFORE] Only one pattern, Nothing to compress")
             return
-        logger.debug("[COMP_BEFORE] Check if we can compress pattern groups")
+        logger.debug("[COMP_BEFORE] Check if we can compress pattern groups with identiy >%s",identity)
 
         def compare_patterns(a,b):
             return len(a[1].symbol) - len(b[1].symbol)
@@ -527,9 +576,11 @@ class PatternFinder(object):
 
 
         _s_al = sorted(enumerate(_al), key=functools.cmp_to_key(compare), reverse=True)
-        logger.debug("[COMP_BEFORE] computed %s alignments", len(_s_al))
+        s=""
         for k in _s_al:
-            logger.debug("  pos:%s %s",k[0],k[1])
+            s+="\n"+"  pos:{} {}".format(k[0],indent(k[1],5))
+        logger.debug("[COMP_BEFORE] computed %s alignments %s", len(_s_al),s)
+
 
         best_align=_s_al[0][1]
         if best_align.best()['identity']>identity:
@@ -603,7 +654,8 @@ class PatternFinder(object):
         :param excludePos: optional parameter to exclude a certain existing pattern
         :return: position of closest pattern and the computed alignment
         """
-        logger.debug("Find closest pattern to %s (excludePos=%s)",value, excludePos)
+        logger.debug("  >{:-^30}<".format(' CLOSEST PATTERN '))
+        logger.debug("  Find closest pattern to %s (excludePos=%s)",value, excludePos)
         _al= []
         for i, _pat in enumerate(self._patterns):
 
@@ -618,9 +670,12 @@ class PatternFinder(object):
 
         _s_al= sorted(enumerate(_al), key=functools.cmp_to_key(compare),reverse=True)
 
-        logger.debug("Compared %s to %s patterns", value, len(_al))
+
+        s=""
         for k in _s_al:
-            logger.debug(k[1])
+            s+="\n"+indent(k[1],4)
+        logger.debug("  Compared %s to %s patterns %s", value, len(_al),s)
+
 
         return _s_al[0]
 
@@ -659,7 +714,12 @@ class PatternFinder(object):
 
 
 
-
+@timer(key='pattern2')
+def pattern(items, max_pattern=3):
+    pm = PatternFinder(max_pattern=max_pattern)
+    for value in items:
+        pm.add(value)
+    return pm
 
 
 

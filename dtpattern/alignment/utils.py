@@ -41,6 +41,9 @@ def unique_order(seq):
     return ''.join([x[0] for x in itertools.groupby(seq)])
 
 
+def indent(s, indent):
+    return "\n".join((indent * " ") + i for i in str(s).splitlines())
+
 def sm_longest_match(s1,s2):
     """
     Uses the difflib SequenceMatcher to find common sub patterns

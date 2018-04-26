@@ -1,4 +1,4 @@
-from contexttimer import Timer
+from dtpattern.timer import Timer
 
 import tests.value_lists as value_lists
 from dtpattern.dtpattern2 import Pattern, Alignment
@@ -29,14 +29,15 @@ data_pairs=[
 ]
 
 data_lists=[
-    ['1','333','12'],
-    random_time(10),
-    random_iso8601(10),
-    random_date(10),
-    random_number(3,digits=3, fix_len=True),
-    random_isbn10(10),
-    random_isbn13(10),
-    random_word(100)
+    # ['1','333','12'],
+    # random_time(10),
+    # random_iso8601(10),
+    # random_date(10),
+    # random_number(3,digits=3, fix_len=True),
+    # random_isbn10(10),
+    # random_isbn13(10),
+    # random_word(100)
+    ['New Jersey', 'Oklahoma', 'Rhode Island', 'Montana']
 ]
 
 def test_pairs(data=data_pairs,printRepr=False):
@@ -80,7 +81,8 @@ def test_pairs_trans(data=data_pairs,printRepr=False):
 
 def test_lists(data=data_list, printRepr=False):
     for d in data:
-        with Timer(factor=1000) as t:
+
+        with Timer(key="run") as t2:
             print("\n{:#^30}\n>> {} <<".format(' TEST ',d))
             if len(d)<2:
                 print("NEED AT LEAST 2 elements")
@@ -98,10 +100,13 @@ def test_lists(data=data_list, printRepr=False):
 
             print("\n{:-^30}\n>> {}\nDETAILS{}".format(" RESULT ", alpha, repr(alpha)))
             print(alpha._compact())
-        print("{:4.3f} ms elapsed for {} values".format(t.elapsed, len(d)))
 
-test_pairs_trans()
-#test_lists(data=data_lists,printRepr=False)
+    print(Timer.printStats())
+
+#test_pairs_trans()
+test_lists(data=[['1','1A','A2','2']],printRepr=True)
+
+
 
 
 

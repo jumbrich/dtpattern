@@ -16,6 +16,7 @@ from collections import defaultdict
 from dtpattern.suffix_tree import STree
 
 # >>>>>>>>>> TRANSLATE >>>>>>>>>>>>>>>>>
+from dtpattern.timer import timer
 
 UPPER = 'C'
 UPPER_PLACEHOLDER = 'A'
@@ -518,6 +519,7 @@ def collapse(patterns):
         sym = ''.join([x for x in s if x in ALL])
         return '{{{}}}'.format(sym)
 
+@timer(key="pattern1")
 def pattern(values, size=1, verbose=False, includeCount=True):
     patterns = translate_all(values)
     res= aggregate_patterns(patterns, size=size, verbose=verbose, run=1)

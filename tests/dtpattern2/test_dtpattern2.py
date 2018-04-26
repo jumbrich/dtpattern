@@ -1,15 +1,18 @@
-from contexttimer import Timer
 
 from dtpattern import debugConf, defaultConf, fileConf, infoConf
 from dtpattern.dtpattern2 import PatternFinder, compress_strategies
 
-#logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)-8s - %(name)s - %(message)s  ')
-#logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s - %(message)s')
-from tests.dtpattern2.inputvalue_generator import *
+from dtpattern.dtpattern2 import  pattern as pattern2
+from dtpattern.dtpattern1 import pattern as pattern1
 
+
+from dtpattern.timer import Timer, timer
 
 import logging
 import logging.config
+
+from tests.dtpattern2.mimesis_provider import create_data
+
 logging.config.dictConfig(debugConf)
 logger = logging.getLogger(__name__)
 
@@ -45,5 +48,57 @@ def get_patterns(d, groups):
         logger.info(repr(pm))
         logger.info(pm.info())
 
-for d,g in data_lists:
-    get_patterns(d,g)
+#for d,g in data_lists:
+#    get_patterns(d,g)
+
+
+def merge(data, max_patterns):
+    print("groups:{} Sample {}".format(max_patterns,data[:15]))
+
+    pm = PatternFinder(max_pattern=max_patterns)
+    for value in data:
+        pm.add(value)
+        logger.debug(pm)
+    #pm = pattern2(data, max_patterns)
+
+    res = pattern1(data)
+    print("## RESULTS ")
+    print("  PAT-M1: {}".format(res))
+
+    s = pm.info()
+    s = "\n".join((3 * " ") + i for i in s.splitlines() if len(i.strip()) > 0)
+    print("  PAT-M2:\n{}".format(s))
+
+    print(Timer.printStats())
+
+def test_mimesis_data(size=1000, provider='address', method='calling_code', max_patterns=3):
+    mimesis_data_full=create_data(size=size, provider=provider, method=method)
+
+    for k,v in mimesis_data_full.items():
+
+        for sk,sv in v.items():
+
+            if isinstance(sv[0], str):
+                if len(sv[0])<15:
+
+                    print("{:#>10} {:>15}.{:<15} {:#>10}\n## sample: {}".format('', k, sk, '',sv[0:25]))
+                    with Timer(key="{}.{}-m2".format(k,sk)) as t2:
+                        pm=pattern2(sv,max_patterns)
+
+                    with Timer(key="{}.{}-m1".format(k, sk)) as t1:
+                        res=pattern1(sv)
+                    print("## RESULTS ")
+                    print("  PAT-M1: {}".format(res))
+
+                    s=pm.info()
+                    s="\n".join((3 * " ") + i for i in s.splitlines() if len(i.strip())>0)
+                    print("  PAT-M2:\n{}".format(s))
+                    print("  TIMING: {}".format(Timer.printStats(keys=["{}.{}-m1".format(k, sk),"{}.{}-m2".format(k,sk)], header=False)))
+
+
+    print(Timer.printStats())
+
+#test_mimesis_data(size=10, provider='address',  max_patterns=3, method=None)#,method='calling_code')
+
+data=['Massachusetts', 'Florida', 'Delaware', 'New Hampshire', 'North Carolina', 'Arkansas', 'West Virginia', 'Ohio', 'Florida', 'Vermont']
+merge(data, 2)
