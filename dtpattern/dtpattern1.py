@@ -12,7 +12,6 @@ from difflib import SequenceMatcher as SM
 from itertools import groupby
 
 from collections import defaultdict
-
 from dtpattern.suffix_tree import STree
 
 # >>>>>>>>>> TRANSLATE >>>>>>>>>>>>>>>>>

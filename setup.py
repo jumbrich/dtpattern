@@ -17,6 +17,8 @@ setup_requirements = [ ]
 
 test_requirements = [ ]
 
+
+
 setup(
     author="Juergen Umbrich",
     author_email='jueumb@gmail.com',
@@ -44,7 +46,7 @@ setup(
     include_package_data=True,
     keywords='dtpattern',
     name='dtpattern',
-    packages=find_packages(include=['dtpattern']),
+    packages=find_packages(),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
