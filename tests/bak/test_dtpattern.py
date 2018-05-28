@@ -4,9 +4,9 @@ import unittest
 import sys
 
 from dtpattern.dtpattern import pattern, aggregate_group_of_same_symbols
-from tests.value_lists import same_length_numbers, same_length_lowercase, same_length_uppercase, var_length_numbers, \
+from tests.bak.value_lists import same_length_numbers, same_length_lowercase, same_length_uppercase, var_length_numbers, \
     var_length_lowercase
-from tests.value_pattern_types_list import random_number, random_date, random_time, random_iso8601, \
+from tests.bak.value_pattern_types_list import random_number, random_date, random_time, random_iso8601, \
     random_lowercase_string, random_word, random_words
 
 

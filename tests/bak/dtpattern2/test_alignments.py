@@ -1,8 +1,8 @@
 from dtpattern.timer import Timer
 
-import tests.value_lists as value_lists
+import tests.bak.value_lists as value_lists
 from dtpattern.dtpattern2 import Pattern, Alignment
-from tests.dtpattern2.inputvalue_generator import *
+from tests.bak.dtpattern2.inputvalue_generator import *
 
 data=[
     ['http://deri.org/', 'https://deri.com']

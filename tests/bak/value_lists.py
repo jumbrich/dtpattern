@@ -1,4 +1,4 @@
-from tests.value_pattern_types_list import random_number, random_lowercase_string, random_date, random_uppercase_string
+from tests.bak.value_pattern_types_list import random_number, random_lowercase_string, random_date, random_uppercase_string
 
 test_cols_aggregated=[
     ( random_number(2,digits=1, fix_len=True)+random_number(2,digits=2, fix_len=True), '01'),

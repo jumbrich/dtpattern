@@ -3,7 +3,7 @@ from dtpattern.alignment import alignment_orig
 from dtpattern.merge import merge_values
 from dtpattern.serialise import pattern_to_string
 from dtpattern.utils import translate
-from tests import test_merge_same_csets
+from tests.bak import test_merge_same_csets
 
 s1="1234"
 s2="1234"

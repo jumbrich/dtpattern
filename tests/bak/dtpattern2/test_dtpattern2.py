@@ -11,7 +11,7 @@ from dtpattern.timer import Timer, timer
 import logging
 import logging.config
 
-from tests.dtpattern2.mimesis_provider import create_data
+from tests.bak.dtpattern2.mimesis_provider import create_data
 
 logging.config.dictConfig(debugConf)
 logger = logging.getLogger(__name__)
