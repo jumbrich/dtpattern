@@ -98,7 +98,7 @@ def test_mimesis_data(size=1000, provider='address', method='calling_code', max_
 
     print(Timer.printStats())
 
-#test_mimesis_data(size=10, provider='address',  max_patterns=3, method=None)#,method='calling_code')
+test_mimesis_data(size=10, provider='address',  max_patterns=3, method=None)#,method='calling_code')
 
 data=['Massachusetts', 'Florida', 'Delaware', 'New Hampshire', 'North Carolina', 'Arkansas', 'West Virginia', 'Ohio', 'Florida', 'Vermont']
 merge(data, 2)

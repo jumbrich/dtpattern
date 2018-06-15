@@ -17,6 +17,7 @@ from dtpattern.suffix_tree import STree
 # >>>>>>>>>> TRANSLATE >>>>>>>>>>>>>>>>>
 from dtpattern.timer import timer
 
+
 UPPER = 'C'
 UPPER_PLACEHOLDER = 'A'
 LOWER = 'c'
@@ -37,7 +38,7 @@ in_out2 = {
     string.digits: DIGIT,
     string.ascii_lowercase: LOWER,
     string.ascii_uppercase: UPPER,
-    'äöü': LOWER,
+    'äöüß': LOWER,
     'ÄÖÜ': UPPER,
     ' ': ' ',
     '!"#$%&*<=>?@|': SPECIAL,
@@ -116,7 +117,7 @@ def aggregate_group_of_same_symbols(patterns=None, values=None):
         else:
             a = p[::-1]
             b = pattern[::-1]
-            match = SM(None, a, b).find_longest_match(0, len(a), 0, len(b))
+            match = SM(None, a, b, autojunk=False).find_longest_match(0, len(a), 0, len(b))
             m = max([len(p), len(b)])
             if DIGIT in p:
                 p = DIGIT_PLACEHOLDER * (m - match.size) + DIGIT * match.size
@@ -224,7 +225,7 @@ def l3_shared_groups(L2, ind=0, verbose=False):
         else:
             m = False
             for sp in sorted(s_p.keys(), key=len, reverse=True):
-                match = SM(None, sp, gk).find_longest_match(0, len(sp), 0, len(gk))
+                match = SM(None, sp, gk, autojunk=False).find_longest_match(0, len(sp), 0, len(gk))
                 if match.size != 0:
                     m = True
                     match_pat = sp[match.a: match.a + match.size]
@@ -315,7 +316,7 @@ def l3_aggregate(L2, len_patterns, ind=0, verbose=False, run=1, max_presub_runs=
         p_suffix = []
         for g in l3_get_patterns_in_L2(L2, v):
             # find longest match between the key and this pattern
-            m = SM(None, k, g[0]).find_longest_match(0, len(k), 0, len(g[0]))
+            m = SM(None, k, g[0], autojunk=False).find_longest_match(0, len(k), 0, len(g[0]))
             o, l = g[0][:m.b], g[0][m.b + m.size:]  # split in prefix and suffix
 
             s_pre = o if len(o) > 0 else ''
@@ -324,37 +325,46 @@ def l3_aggregate(L2, len_patterns, ind=0, verbose=False, run=1, max_presub_runs=
             op_a.add(l)
 
             for p in g[2]:
-                sub_p = ''
+                # this code snippets should detect the index of the original string given the prefix/suffeix as in the L2 pattern
+
+                _s_p= p[0] # full pattern string
+
+                match_sub_string = ''
                 ks = [aa for aa in k]
                 ps = [aa for aa in s_pre]
                 kc = ks.pop(0) if len(ks) > 0 else None
-                pc = ps.pop(0) if len(ps) > 0 else None
-                pre_i, suf_i = len(p[0]), 0
-                i = 0
-                for i, c in enumerate(p[0]):
-                    while pc and c != pc:
-                        pc = ps.pop(0) if len(ps) > 0 else None
-                    if not pc or c != pc:
-                        # no prefix
+                pre_char = ps.pop(0) if len(ps) > 0 else None
+                pre_i, suf_i = len(_s_p), 0 #set to end and start
+
+                for i, c in enumerate(_s_p):
+                    #we iterate over each character int he full pattern string
+
+                    while pre_char and pre_char != c:
+                        #skip prefix string until next matching char
+                        pre_char = ps.pop(0) if len(ps) > 0 else None
+
+                    if not pre_char or c != pre_char:
+                        #we parsed all prefixes
                         while kc and c != kc:
                             kc = ks.pop(0) if len(ks) > 0 else None
                         if c == kc:
-                            pre_i = min(i, pre_i)
-                            sub_p += c
+                            #match between character in string and key l2 character
+                            pre_i = min(i, pre_i) # update prefix_index, typically done only once
+                            match_sub_string += c #store the character as the key pattern
                         else:
                             # ok no prefix and not a key pattern -> should be suffix
                             break
 
                 # i=len(sub_p) if i < len(sub_p) else i
-                suf_i = pre_i + len(sub_p)
-                ss_pre = p[0][0:pre_i]
-                ss_suf = p[0][suf_i:]
+                suf_i = pre_i + len(match_sub_string)
+                ss_pre = _s_p[0:pre_i]
+                ss_suf = _s_p[suf_i:]
 
                 if len(ss_pre) > 0:
                     p_prefix.append(ss_pre)
                 if len(ss_suf) > 0:
                     p_suffix.append(ss_suf)
-                p_to_agg.append((sub_p, p[1]))
+                p_to_agg.append((match_sub_string, p[1]))
         p_groups = [[] for a in range(0, len(k))]
         cnt = 0
         for p in p_to_agg:
