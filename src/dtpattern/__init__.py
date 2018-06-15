@@ -5,7 +5,7 @@
 
 __author__ = """Juergen Umbrich"""
 __email__ = 'jueumb@gmail.com'
-__version__ = '0.3'
+__version__ = '0.4'
 
 
 import logging
