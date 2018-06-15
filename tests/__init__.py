@@ -1,26 +1,23 @@
 # -*- coding: utf-8 -*-
 
-"""Unit test package for dtpattern."""
-import logging
-
-import sys
 
 
-def for_examples(parameters):
 
-  def tuplify(x):
-    if not isinstance(x, tuple):
-      return (x,)
-    return x
 
-  def decorator(method, parameters=parameters):
-    for parameter in (tuplify(x) for x in parameters):
+def print_columns(data, columns=4):
 
-      def method_for_parameter(self, method=method, parameter=parameter):
-        method(self, *parameter)
-      args_for_parameter = ",".join(repr(v) for v in parameter)
-      name_for_parameter = method.__name__ + "(" + args_for_parameter + ")"
-      frame = sys._getframe(1)  # pylint: disable-msg=W0212
-      frame.f_locals[name_for_parameter] = method_for_parameter
-    return None
-  return decorator
+    my_len = len(data)
+    my_len = (my_len - my_len % columns) + columns
+    my_range = my_len // columns
+
+
+    fin_list = [data[i * columns:i * columns + columns] for i in range(my_range)]
+
+
+    sf="{:-^"+str(columns*31+1)+"}"
+    print(sf.format(' DATA '))
+    for item in fin_list:
+        sf = len(item) * '|{:^30}'
+        sf+="|"
+        print(sf.format(*item))
+    print((columns * 31+1) * '-')
