@@ -10,7 +10,7 @@ try:
     dist_name = __name__
     __version__ = get_distribution(dist_name).version
 except DistributionNotFound:
-    __version__ = 'unknown'
+    __version__ = '0.4'
 __author__ = """Juergen Umbrich"""
 __email__ = 'jueumb@gmail.com'
 
