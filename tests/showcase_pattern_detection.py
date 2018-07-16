@@ -1,9 +1,7 @@
 
 from csvmimesis.mimesis_data_providers import list_locals, list_providers_methods
 from csvmimesis.table_generator import create_data_provider_list
-
-
-from dtpattern.timer import Timer
+from pyjuhelpers.timer import Timer
 
 
 def print_columns(data, columns=4):

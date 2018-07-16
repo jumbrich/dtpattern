@@ -3,7 +3,7 @@
 """Console script for dtpattern."""
 import sys
 import click
-from contexttimer import Timer
+
 
 from dtpattern.dtpattern2 import PatternFinder
 from dtpattern.alignment.alignment_cls import Alignment
@@ -47,9 +47,8 @@ def items(items,size, verbose):
     if verbose:
         click.echo("Item list {}".format(items[0:10]))
     pm = PatternFinder(max_pattern=size)
-    with Timer(factor=1000) as t:
-        for value in items:
-            pm.add(value)
+    for value in items:
+        pm.add(value)
     if verbose:
         click.echo("Time elapsed {} ms for {} values".format(t.elapsed, len(items)))
         click.echo(repr(pm))
@@ -69,10 +68,9 @@ def file(file, verbose,  size):
 
     pm = PatternFinder(max_pattern=size)
     c=0
-    with Timer(factor=1000) as t:
-        for value in file:
-            pm.add(value)
-            c+=1
+    for value in file:
+        pm.add(value)
+        c+=1
 
     if verbose:
         click.echo("Time elapsed {} ms for {} values".format(t.elapsed, c))

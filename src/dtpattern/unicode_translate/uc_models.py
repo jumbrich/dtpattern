@@ -8,8 +8,8 @@ from collections import __init__
 
 #FIX_SYMB = collections.namedtuple("FIX_SYMB", ['symbol', 'len'])
 #VAR_SYMB = collections.namedtuple("VAR_SYMB", ['symbol', 'fixed', 'var','max_len'])
-#OPT_SYMB = collections.namedtuple("OPT_SYMB", ['symbol', 'len'])
-#SYMB_GROUP = collections.namedtuple("SYMB_GROUP", ['symbols', 'len'])
+OPT_SYMB = collections.namedtuple("OPT_SYMB", ['symbol', 'len'])
+SYMB_GROUP = collections.namedtuple("SYMB_GROUP", ['symbols', 'len'])
 
 #OPT_PATTERN = collections.namedtuple('OPT_PATTERN', ['pattern','count'])
 #UC_SYMBOLS = collections.namedtuple('UC_SYMBOLS', ['symbols', 'fixed', 'var', 'max_len'])

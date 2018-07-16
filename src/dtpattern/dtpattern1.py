@@ -15,9 +15,9 @@ from collections import defaultdict
 from dtpattern.suffix_tree import STree
 
 # >>>>>>>>>> TRANSLATE >>>>>>>>>>>>>>>>>
-from dtpattern.timer import timer
 from dtpattern.utils import translate, ALL, all_table_ascii_unicode, DIGIT, DIGIT_PLACEHOLDER, UPPER, LOWER_PLACEHOLDER, \
     UPPER_PLACEHOLDER, LOWER
+from pyjuhelpers.timer import timer
 
 
 def pattern_comparator(pattern1, pattern2):
