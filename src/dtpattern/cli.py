@@ -6,10 +6,12 @@ import click
 import logging
 import logging.config
 
-from dtpattern import defaultConf,debugConf,fileConf, infoConf
+from pyjuhelpers.logging import defaultConf,debugConf,fileConf, infoConf
 
-from dtpattern.services.cli_dtpattern import dtpattern as dtpattern1
-from dtpattern.services.cli_dtpattern2 import dtpattern2
+
+from dtpattern.services.cli_dtpattern_new import dtpattern
+from dtpattern.services.cli_demo import demo
+from dtpattern.services.cli_ucs import ucs
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -35,8 +37,10 @@ def main(log, logconf):
 
     pass
 
-main.add_command(dtpattern1)
-main.add_command(dtpattern2)
+main.add_command(dtpattern)
+main.add_command(demo)
+main.add_command(ucs)
+#main.add_command(dtpattern2)
 
 
 if __name__ == "__main__":

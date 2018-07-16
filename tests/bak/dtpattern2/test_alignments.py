@@ -1,7 +1,8 @@
 from dtpattern.timer import Timer
 
 import tests.bak.value_lists as value_lists
-from dtpattern.dtpattern2 import Pattern, Alignment
+from dtpattern.alignment.alignment_cls import Alignment
+from dtpattern.alignment.pattern_cls import Pattern
 from tests.bak.dtpattern2.inputvalue_generator import *
 
 data=[

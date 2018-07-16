@@ -5,7 +5,9 @@ import sys
 import click
 from contexttimer import Timer
 
-from dtpattern.dtpattern2 import PatternFinder, Alignment, Pattern
+from dtpattern.dtpattern2 import PatternFinder
+from dtpattern.alignment.alignment_cls import Alignment
+from dtpattern.alignment.pattern_cls import Pattern
 
 
 @click.group()

@@ -16,66 +16,37 @@ from dtpattern.suffix_tree import STree
 
 # >>>>>>>>>> TRANSLATE >>>>>>>>>>>>>>>>>
 from dtpattern.timer import timer
+from dtpattern.utils import translate, ALL, all_table_ascii_unicode, DIGIT, DIGIT_PLACEHOLDER, UPPER, LOWER_PLACEHOLDER, \
+    UPPER_PLACEHOLDER, LOWER
 
 
-UPPER = 'C'
-UPPER_PLACEHOLDER = 'A'
-LOWER = 'c'
-LOWER_PLACEHOLDER = 'a'
-DIGIT = '1'
-DIGIT_PLACEHOLDER = '0'
-SPECIAL = '$'
-BRACKET = 'ß'
+def pattern_comparator(pattern1, pattern2):
+    '''
+    :param pattern1:
+    :param pattern2:
+    :return: numbers before ascii
+    '''
 
-ALL = [UPPER, LOWER, DIGIT, SPECIAL, BRACKET, '+', '-', ' ']
-
-in_out = {
-    string.digits: DIGIT,
-    string.ascii_lowercase: LOWER,
-    string.ascii_uppercase: UPPER
-}
-in_out2 = {
-    string.digits: DIGIT,
-    string.ascii_lowercase: LOWER,
-    string.ascii_uppercase: UPPER,
-    'äöüß': LOWER,
-    'ÄÖÜ': UPPER,
-    ' ': ' ',
-    '!"#$%&*<=>?@|': SPECIAL,
-    '()[]{}': BRACKET
-}
+    if pattern1 == pattern2:
+        sim = 0
+    else:
+        p1u = unique_order(pattern1)
+        p2u = unique_order(pattern2)
+        if p1u > p2u:
+            sim = 1
+        elif p1u == p2u:
+            if pattern1 > pattern2:
+                sim = 1
+            else:
+                sim = -1
+        else:
+            sim = -1
+    # print pattern1, pattern2,sim
+    return sim
 
 
-def make_trans_table(in_out):
-    input = ''
-    output = ''
-    for i, o in in_out.items():
-        input += i
-        output += o * len(i)
-    return string.maketrans(input, output)
-
-
-def make_trans_table_unicode(in_out):
-    translate_table = {}
-    for i, o in in_out.items():
-        for char in i:
-            translate_table[ord(char)] = str(o)
-
-    return translate_table
-
-
-#### MASTER TRANS TABLE
-### code to translate characters/numbers/special characters to symbols
-all_table_unicode = make_trans_table_unicode(in_out2)
-
-def translate(input, trans_table=all_table_unicode):
-    ''' use the unicode mapping'''
-    if type(input) != str:
-        input = input.decode('utf-8')
-    return input.translate(trans_table)
-
-def translate_all(inputs, filter_empty=True, sort=True):
-    p = [translate(i) for i in inputs if not filter_empty or len(i.strip()) > 0]
+def translate_all(inputs, filter_empty=True, sort=True, trans_table=all_table_ascii_unicode):
+    p = [translate(i, trans_table=trans_table   ) for i in inputs if not filter_empty or len(i.strip()) > 0]
     if sort:
         p = sorted(p, key=functools.cmp_to_key(pattern_comparator))
     return p
@@ -140,7 +111,6 @@ def aggregate_group_of_pattern_tuples(p_tuples):
     agg_pattern = aggregate_group_of_same_symbols(ps)
 
     return (agg_pattern, cnt)
-
 
 def unique_order(seq):
     return ''.join([x[0] for x in groupby(seq)])
@@ -414,29 +384,6 @@ def l3_aggregate(L2, len_patterns, ind=0, verbose=False, run=1, max_presub_runs=
     return results
 
 
-def pattern_comparator(pattern1, pattern2):
-    '''
-    :param pattern1:
-    :param pattern2:
-    :return: numbers before ascii
-    '''
-
-    if pattern1 == pattern2:
-        sim = 0
-    else:
-        p1u = unique_order(pattern1)
-        p2u = unique_order(pattern2)
-        if p1u > p2u:
-            sim = 1
-        elif p1u == p2u:
-            if pattern1 > pattern2:
-                sim = 1
-            else:
-                sim = -1
-        else:
-            sim = -1
-    # print pattern1, pattern2,sim
-    return sim
 
 
 def pattern_comparator_length(pattern1, pattern2):
@@ -529,8 +476,8 @@ def collapse(patterns):
         return '{{{}}}'.format(sym)
 
 @timer(key="pattern1")
-def pattern(values, size=1, verbose=False, includeCount=True):
-    patterns = translate_all(values)
+def pattern(values, size=1, verbose=False, includeCount=True, trans_table=all_table_ascii_unicode):
+    patterns = translate_all(values, trans_table = trans_table)
     res= aggregate_patterns(patterns, size=size, verbose=verbose, run=1)
     if not includeCount:
         return [ r[0] for r in res]
