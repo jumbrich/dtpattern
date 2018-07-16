@@ -1,4 +1,4 @@
-from dtpattern.dtpattern2 import Pattern
+from dtpattern.alignment.pattern_cls import Pattern
 
 p= Pattern("123")
 

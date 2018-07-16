@@ -4,7 +4,7 @@
 
 # zeros() was origianlly from NumPy.
 # This version is implemented by alevchuk 2011-04-10
-from dtpattern.alignment.utils import translate
+from dtpattern.utils import translate
 
 
 def zeros(shape):

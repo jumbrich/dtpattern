@@ -3,8 +3,9 @@ from __future__ import print_function
 
 import warnings
 
-from dtpattern.alignment.utils import translate
+
 from dtpattern.timer import timer, Timer
+from dtpattern.unicode_translate.uc_models import FIX_SYMB, OPT_SYMB, SYMB_GROUP
 
 MAX_ALIGNMENTS = 1000   # maximum alignments recovered in traceback
 
@@ -15,7 +16,7 @@ score_matrix={
     'match':5,
     'mismatch':-4,
     'csetmatch':1,
-    'optional_match':1
+    'OPT_SYMBional_match':1
 
 }
 
@@ -26,54 +27,86 @@ class identity_match2(object):
     or unequal.  By default, match is 1 and mismatch is 0.
     """
 
-    def __init__(self, match=1, mismatch=0, csetmatch=1, optional_match=1):
+    def __init__(self, translate, match=1, mismatch=0, csetmatch=1, optional_match=1):
         """Initialize the class."""
+        self.translate = translate
         self.match = match
         self.mismatch = mismatch
         self.csetmatch = csetmatch
         self.optional_match=optional_match
 
 
-    @dispatch(str,str)
+    @dispatch(str, str)
     def identity_score(self, alpha, beta):
         return self.match if alpha == beta else self.mismatch
 
-    @dispatch(list, list)
+
+    @dispatch(FIX_SYMB, str)
     def identity_score(self, alpha, beta):
-        s_a, s_b=set(alpha), set(beta)
-        if len(s_a)> len(s_b):
-            if s_b < s_a:
-                return self.csetmatch
-        else:
-            if s_a < s_b:
-                return self.csetmatch
+        t= self.translate(beta)
+        if t == alpha.symbol:
+            return self.csetmatch
+        return self.mismatch
+
+    @dispatch(str, FIX_SYMB)
+    def identity_score(self, alpha, beta):
+        return self.identity_score(beta,alpha)
+
+    @dispatch(FIX_SYMB, FIX_SYMB)
+    def identity_score(self, alpha, beta):
+        if alpha.symbol==beta.symbol:
+            return self.csetmatch
         return self.mismatch
 
 
-    @dispatch(tuple, tuple)
-    def identity_score(self, alpha, beta):
-        score = self.identity_score(alpha[0], beta[0])
-        return score - 1 if score > 0 else score
 
-    @dispatch(str, list)
+    @dispatch(object, OPT_SYMB)
     def identity_score(self, alpha, beta):
-        return self.csetmatch if translate(alpha) in beta else self.mismatch
+         score = self.identity_score(alpha, beta.symbol)
+         return score-1 if score >0 else score
+
+    @dispatch(OPT_SYMB, object)
+    def identity_score(self, alpha, beta):
+         score= self.identity_score(alpha.symbol, beta)
+         return score - 1 if score > 0 else score
+
+    @dispatch(SYMB_GROUP, object)
+    def identity_score(self, alpha, beta):
+        return max([self.identity_score(sym, beta) for sym in alpha.symbols])
 
 
-    @dispatch(list, str)
+    @dispatch(SYMB_GROUP, OPT_SYMB)
     def identity_score(self, alpha, beta):
-        return self.csetmatch if translate(beta) in alpha else self.mismatch
+        return max([self.identity_score(sym, beta) for sym in alpha.symbols])
 
-    ##OPTIONAL PATTERNS
-    @dispatch(object, tuple)
+    @dispatch(OPT_SYMB, OPT_SYMB)
     def identity_score(self, alpha, beta):
-        score= self.identity_score(alpha, beta[0])
-        return score-1 if score >0 else score
+        return max([self.identity_score(alpha,sym) for sym in beta.symbols])
 
-    @dispatch(tuple, object)
-    def identity_score(self, alpha, beta):
-        score= self.identity_score(alpha[0], beta)
-        return score - 1 if score > 0 else score
+    # @dispatch(tuple, tuple)
+    # def identity_score(self, alpha, beta):
+    #     score = self.identity_score(alpha[0], beta[0])
+    #     return score - 1 if score > 0 else score
+    #
+    # @dispatch(str, list)
+    # def identity_score(self, alpha, beta):
+    #     return self.csetmatch if translate(alpha) in beta else self.mismatch
+    #
+    #
+    # @dispatch(list, str)
+    # def identity_score(self, alpha, beta):
+    #     return self.csetmatch if translate(beta) in alpha else self.mismatch
+    #
+    # ##OPT_SYMBIONAL PATTERNS
+    # @dispatch(object, tuple)
+    # def identity_score(self, alpha, beta):
+    #     score = self.identity_score(alpha, beta[0])
+    #     return score-1 if score >0 else score
+    #
+    # @dispatch(tuple, object)
+    # def identity_score(self, alpha, beta):
+    #     score= self.identity_score(alpha[0], beta)
+    #     return score - 1 if score > 0 else score
 
     def __call__(self, alpha, beta):
         score= self.identity_score(alpha,beta)
@@ -93,22 +126,22 @@ class identity_match2(object):
         #
         # ## str vs list
         # elif isinstance(alpha, str) and  isinstance(beta, list):
-        #     sym = translate(alpha)
-        #     if sym in beta:
+        #     FIX_SYMB = translate(alpha)
+        #     if FIX_SYMB in beta:
         #         return self.csetmatch
         # elif isinstance(alpha, list) and isinstance(beta, str):
-        #     sym = translate(beta)
-        #     if sym in alpha:
+        #     FIX_SYMB = translate(beta)
+        #     if FIX_SYMB in alpha:
         #         return self.csetmatch
         #
         # # str vs tuple
         # elif isinstance(alpha, str) and  isinstance(beta, tuple):
-        #     sym = translate(alpha)
-        #     if len(sym)>0 and sym in beta[0]:
+        #     FIX_SYMB = translate(alpha)
+        #     if len(FIX_SYMB)>0 and FIX_SYMB in beta[0]:
         #         return self.csetmatch
         # elif isinstance(alpha, tuple) and isinstance(beta, str):
-        #     sym = translate(beta)
-        #     if len(sym)>0 and sym in alpha[0]:
+        #     FIX_SYMB = translate(beta)
+        #     if len(FIX_SYMB)>0 and FIX_SYMB in alpha[0]:
         #         return self.csetmatch
         #
         # # list vs tuple
@@ -124,11 +157,11 @@ class identity_match2(object):
 
 
 @timer(key='align_global')
-def align_global(s1,s2, match=5, csetmatch=4, optional_match=4, mismatch=4, gapopen=-15, gapextend=-1 ):
+def align_global(s1,s2, translate, match=5, csetmatch=4, optional_match=4, mismatch=4, gapopen=-15, gapextend=-1 ):
     pe=0
     default_params = [
         ('sequenceA', s1),('sequenceB',s2),
-        ('match_fn', identity_match2(match=match, mismatch=mismatch, csetmatch=csetmatch,optional_match=optional_match)),
+        ('match_fn', identity_match2(translate=translate,match=match, mismatch=mismatch, csetmatch=csetmatch,optional_match=optional_match)),
         ('gap_A_fn', affine_penalty(gapopen, gapextend, pe)),
         ('gap_B_fn', affine_penalty(gapopen, gapextend, pe)),
         ('penalize_extend_when_opening', 0),
@@ -946,19 +979,19 @@ class dictionary_match(object):
     Attributes:
      - score_dict     - A dictionary where the keys are tuples (residue 1,
        residue 2) and the values are the match scores between those residues.
-     - symmetric      - A flag that indicates whether the scores are symmetric.
+     - FIX_SYMBmetric      - A flag that indicates whether the scores are FIX_SYMBmetric.
 
     """
 
-    def __init__(self, score_dict, symmetric=1):
+    def __init__(self, score_dict, FIX_SYMBmetric=1):
         """Initialize the class."""
         self.score_dict = score_dict
-        self.symmetric = symmetric
+        self.FIX_SYMBmetric = FIX_SYMBmetric
 
     def __call__(self, charA, charB):
         """Call a dictionary match instance already created."""
-        if self.symmetric and (charA, charB) not in self.score_dict:
-            # If the score dictionary is symmetric, then look up the
+        if self.FIX_SYMBmetric and (charA, charB) not in self.score_dict:
+            # If the score dictionary is FIX_SYMBmetric, then look up the
             # score both ways.
             charB, charA = charA, charB
         return self.score_dict[(charA, charB)]
@@ -1008,56 +1041,126 @@ def print_matrix(matrix):
 
 
 
-def equals(alpha, beta):
-    """Call a match function instance already created."""
-    if isinstance(alpha, str) and isinstance(beta, str):
-        if alpha == beta:
-            return True
+class equals(object):
+    """Create a match function for use in an alignment.
+
+    match and mismatch are the scores to give when two residues are equal
+    or unequal.  By default, match is 1 and mismatch is 0.
+    """
+
+    def __init__(self, translate):
+        """Initialize the class."""
+        self.translate = translate
+
+    @dispatch(str, str)
+    def _equals(self, alpha, beta):
+        return alpha == beta
+
+    @dispatch(FIX_SYMB, str)
+    def _equals(self, alpha, beta):
+        t = self.translate(beta)
+        return alpha.symbol == t
+
+    @dispatch(str, FIX_SYMB)
+    def _equals(self, alpha, beta):
+        return self._equals(beta, alpha)
+
+    @dispatch(FIX_SYMB, FIX_SYMB)
+    def _equals(self, alpha, beta):
+        return alpha.symbol == beta.symbol
 
 
-    elif isinstance(alpha, list) and isinstance(beta, list):
-        if set(beta) == set(alpha):
-            return True
-    elif isinstance(alpha, tuple) and isinstance(beta, tuple):
-        ## assume for now that tuples have only one element and same length
-        if alpha[0] == beta[0]:
-            return True
-
-    ## str vs list
-    elif isinstance(alpha, str) and isinstance(beta, list):
-        sym = translate(alpha)
-        if sym in beta:
-            return True
-    elif isinstance(alpha, list) and isinstance(beta, str):
-        sym = translate(beta)
-        if sym in alpha:
-            return True
-
-    # str vs tuple
-    elif isinstance(alpha, str) and isinstance(beta, tuple):
-        sym = translate(alpha)
-        if len(sym)>0 and sym in beta[0]:
-            return True
-    elif isinstance(alpha, tuple) and isinstance(beta, str):
-        sym = translate(beta)
-        if len(sym)>0 and sym in alpha[0]:
-            return True
-
-    # list vs tuple
-    elif isinstance(alpha, list) and isinstance(beta, tuple):
-        if set([c for c in beta[0]]) < set(alpha):
-            return True
-    elif isinstance(alpha, tuple) and isinstance(beta, list):
-        if set(beta) < set([c for c in alpha[0]]):
-            return True
-
-    return False
 
 
-def finalize(align1, align2, score, begin, end):
-    #align1 = align1[::-1]  # reverse sequence 1
-    #align2 = align2[::-1]  # reverse sequence 2
+    @dispatch(object, OPT_SYMB)
+    def _equals(self, alpha, beta):
+        return self._equals(alpha, beta.symbol)
 
+    @dispatch(OPT_SYMB, object)
+    def _equals(self, alpha, beta):
+        return self._equals(alpha.symbol, beta)
+
+    @dispatch(SYMB_GROUP, object)
+    def _equals(self, alpha, beta):
+        return any([self._equals(sym, beta) for sym in alpha.symbols])
+
+    @dispatch(SYMB_GROUP, OPT_SYMB)
+    def _equals(self, alpha, beta):
+        return any([self._equals(sym, beta) for sym in alpha.symbols])
+
+    @dispatch(OPT_SYMB, OPT_SYMB)
+    def _equals(self, alpha, beta):
+        return self._equals(beta,alpha)
+
+    def __call__(self, alpha, beta):
+        score= self._equals(alpha,beta)
+        return score
+
+
+#
+# @dispatch(str,str)
+# def equals(alpha, beta):
+#     return alpha == beta
+#
+#
+#
+#
+#
+# def equals(alpha, beta):
+#     """Call a match function instance already created."""
+#     if isinstance(alpha, str) and isinstance(beta, str):
+#         if alpha == beta:
+#             return True
+#
+#
+#     elif isinstance(alpha, list) and isinstance(beta, list):
+#         if set(beta) == set(alpha):
+#             return True
+#     elif isinstance(alpha, tuple) and isinstance(beta, tuple):
+#         ## assume for now that tuples have only one element and same length
+#         if alpha[0] == beta[0]:
+#             return True
+#
+#     ## str vs list
+#     elif isinstance(alpha, str) and isinstance(beta, list):
+#         FIX_SYMB = translate(alpha)
+#         FIX_SYMB = '' if len(FIX_SYMB) == 0 else FIX_SYMB[0]
+#         if FIX_SYMB in beta:
+#             return True
+#     elif isinstance(alpha, list) and isinstance(beta, str):
+#         FIX_SYMB = translate(beta)
+#
+#         FIX_SYMB='' if len(FIX_SYMB)==0 else FIX_SYMB[0]
+#
+#         if FIX_SYMB in alpha:
+#             return True
+#
+#     # str vs tuple
+#     elif isinstance(alpha, str) and isinstance(beta, tuple):
+#         FIX_SYMB = translate(alpha)
+#         FIX_SYMB = '' if len(FIX_SYMB) == 0 else FIX_SYMB[0]
+#         if len(str(FIX_SYMB))>0 and FIX_SYMB in beta[0]:
+#             return True
+#     elif isinstance(alpha, tuple) and isinstance(beta, str):
+#         FIX_SYMB = translate(beta)
+#         FIX_SYMB = '' if len(FIX_SYMB) == 0 else FIX_SYMB[0]
+#         if len(str(FIX_SYMB))>0 and FIX_SYMB in alpha[0]:
+#             return True
+#
+#     # list vs tuple
+#     elif isinstance(alpha, list) and isinstance(beta, tuple):
+#         if set([c for c in beta[0]]) < set(alpha):
+#             return True
+#     elif isinstance(alpha, tuple) and isinstance(beta, list):
+#         if set(beta) < set([c for c in alpha[0]]):
+#             return True
+#
+#     return False
+
+
+def finalize(align1, align2,  score, begin, end, translate = None):
+
+    _equals = equals(translate=translate)
     i, j = 0, 0
 
     # calcuate identity, score and aligned sequeces
@@ -1067,7 +1170,7 @@ def finalize(align1, align2, score, begin, end):
 
     for i in range(0, len(align1)):
         # if two AAs are the same, then output the letter
-        if equals(align1[i], align2[i]):
+        if _equals(align1[i], align2[i]):
             if align1[i] != align2[i]:
                 symbol.append([align1[i], align2[i]])
             else:
@@ -1107,23 +1210,25 @@ def to_string(s):
     if isinstance(s, tuple):
         return "{}{{{},{}}}".format(s[0],s[1],s[2])
 
-def format_alignment2(identity, score, align1, symbol, align2, indent=1):
+def format_alignment2(identity, score, align1, FIX_SYMBbol, align2, indent=1,translate = None):
 
-    sym = [to_string(c) for c in symbol]
+    _equals = equals(translate=translate)
+
+    FIX_SYMB = [to_string(c) for c in FIX_SYMBbol]
     al1 = [to_string(c) for c in align1]
     al2 = [to_string(c) for c in align2]
 
-    sal1,sal2,ssym,_m='','','',''
-    for i, d in enumerate(zip(al1,  sym, al2)):
+    sal1,sal2,sFIX_SYMB,_m='','','',''
+    for i, d in enumerate(zip(al1,  FIX_SYMB, al2)):
         a, s, b = d
         _ml= max([len(a),len(s),len(b)])
         sa="{:^"+str(_ml)+"}  "
 
         sal1 += sa.format(a)
-        ssym += sa.format(s)
+        sFIX_SYMB += sa.format(s)
         sal2 += sa.format(b)
 
-        if equals(align1[i],align2[i]):
+        if _equals(align1[i],align2[i]):
             _m += sa.format('=')
         elif a == "''" or b == "''":
             _m += sa.format('X')
@@ -1137,7 +1242,7 @@ def format_alignment2(identity, score, align1, symbol, align2, indent=1):
     s += "\n#{:^5} {}".format("", _m)
     s += "\n#{:^5} {}".format("a2:", sal2)
     s += "\n#{}".format('-'*(len(sal2)+5))
-    s += "\n#{:^5} {}".format("=>", ssym)
+    s += "\n#{:^5} {}".format("=>", sFIX_SYMB)
 
 
     return "\n".join((indent * " ") + i for i in s.splitlines())
@@ -1146,7 +1251,7 @@ def format_alignment2(identity, score, align1, symbol, align2, indent=1):
     #            " s1: {}\n" \
     #            " s2: {}\n" \
     #            "  a: {}\n" \
-    #            "  identity: {:2.2f}% Score: {}".format("ALIGNMENT " + "", align1, align2, str(symbol), identity,
+    #            "  identity: {:2.2f}% Score: {}".format("ALIGNMENT " + "", align1, align2, str(FIX_SYMBbol), identity,
     #                                                    score))
 
 def format_alignment(align1, align2, score, begin, end):

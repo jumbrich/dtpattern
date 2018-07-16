@@ -1,6 +1,13 @@
+import functools
 import itertools
 import string
 from difflib import SequenceMatcher as SM
+
+
+
+
+
+
 
 UPPER = 'C'
 LOWER = 'c'
@@ -17,23 +24,64 @@ in_out2 = {
 }
 
 
+
+UPPER = 'C'
+UPPER_PLACEHOLDER = 'A'
+LOWER = 'c'
+LOWER_PLACEHOLDER = 'a'
+DIGIT = '1'
+DIGIT_PLACEHOLDER = '0'
+SPECIAL = '$'
+BRACKET = 'ß'
+
+ALL = [UPPER, LOWER, DIGIT, SPECIAL, BRACKET, '+', '-', ' ']
+
+in_out = {
+    string.digits: DIGIT,
+    string.ascii_lowercase: LOWER,
+    string.ascii_uppercase: UPPER
+}
+
+
+
+
+
+
+
 def make_trans_table_unicode(in_out):
     translate_table = {}
     for i, o in in_out.items():
         for char in i:
-            translate_table[ord(char)] = str(o)
+            translate_table[ ord(char )] = str(o)
 
     return translate_table
 
 
-all_table_unicode = make_trans_table_unicode(in_out2)
+in_out2 = {
+    string.digits: DIGIT,
+    string.ascii_lowercase: LOWER,
+    string.ascii_uppercase: UPPER,
+    'äöüß': LOWER,
+    'ÄÖÜ': UPPER,
+    ' ': ' ',
+    '!"#$%&*<=>?@|': SPECIAL,
+    '()[]{}': BRACKET
+}
+all_table_ascii_unicode = make_trans_table_unicode(in_out2)
 
 
-def translate(input, trans_table=all_table_unicode):
+
+
+
+#### MASTER TRANS TABLE
+### code to translate characters/numbers/special characters to symbols
+
+def translate(input, trans_table = all_table_ascii_unicode):
     ''' use the unicode mapping'''
     if type(input) != str:
         input = input.decode('utf-8')
     return input.translate(trans_table)
+
 
 
 def unique_order(seq):

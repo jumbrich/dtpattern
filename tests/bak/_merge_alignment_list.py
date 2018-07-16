@@ -1,4 +1,4 @@
-from dtpattern.alignment import utils
+from dtpattern import utils
 
 data=[
     ["fhttp://deri.org","https://deri.com"]
@@ -32,7 +32,7 @@ def symbol_to_patter(orig, symbol):
                 if "-" in s:
                     opt=a2 if a1 =="-" else a1
                     if isinstance(opt,str):
-                        opt=utils.translate(opt)
+                        opt= utils.translate(opt)
                     m.append((opt,0,1))
 
                 else:

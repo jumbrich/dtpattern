@@ -1,4 +1,4 @@
-from dtpattern.alignment.utils import translate
+from dtpattern.utils import translate
 
 
 def zeros(shape):
