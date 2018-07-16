@@ -98,7 +98,7 @@ class PatternFinder(object):
             elif isinstance(pat, OPT_PATTERN):
                 #print(">-")
                 s= self.score(pat.patterns, pat.count)
-                sc = s * (pat.count / cnt)
+                sc = s * (pat.count / cnt) if cnt >0 else s
                 #print(s," weight",pat.count, cnt)
                 #print("<-")
                 _score += sc
@@ -112,7 +112,8 @@ class PatternFinder(object):
                 print("Hllo", pat)
             #print(i, _score, pat)
         #print(_score,l)
-        return _score/l
+
+        return _score/l if l >0 else 0
 
 
     def pattern(self, values:[])-> RESULT_PATTERN:
