@@ -4,8 +4,9 @@ from __future__ import print_function
 import warnings
 
 
-from dtpattern.timer import timer, Timer
+
 from dtpattern.unicode_translate.uc_models import FIX_SYMB, OPT_SYMB, SYMB_GROUP
+from pyjuhelpers.timer import timer, Timer
 
 MAX_ALIGNMENTS = 1000   # maximum alignments recovered in traceback
 
