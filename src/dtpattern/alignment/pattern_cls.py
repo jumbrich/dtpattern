@@ -6,11 +6,13 @@ from operator import itemgetter
 from dtpattern.alignment.merge import merge
 
 from dtpattern.alignment.alignment_cls import Alignment
-from dtpattern.timer import timer
+
 from dtpattern.unicode_translate.pattern_detection_print import pattern_to_string
 from dtpattern.unicode_translate.uc_models import PATTERN, FIX_SYMB, OPT_SYMB
 
 import structlog
+from pyjuhelpers.timer import timer
+
 log = structlog.get_logger()
 
 @functools.total_ordering
@@ -133,7 +135,7 @@ class Pattern(object):
     def _serialise(self):
         pat = PATTERN(self.symbol,self._count)
 
-        s= pattern_to_string(pat, collapse_multi=False)
+        s= pattern_to_string(pat, collapse_level=2)
 
         return s
 

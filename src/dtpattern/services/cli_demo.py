@@ -12,6 +12,7 @@ from dtpattern.unicode_translate.translate import higher_level
 from dtpattern.value_pattern_detection import pattern, uc_agg, pf
 from pyjuhelpers.string_format import print_columns
 from pyjuhelpers.timer import Timer
+from dtpattern.dtpattern2 import pattern as pattern2
 
 
 def datagenerator(local=None, provider=None, method=None, size=10, seed="ascd"):
@@ -39,14 +40,36 @@ def demo():
     """demo modus, showcase values and their patterns"""
     pass
 
+
+
+
+def _pattern1(key, values):
+    with Timer(key="p1-{}".format(key)) as t:
+        pat = value_pattern_detection.pattern(values, pf=pf)
+        print("---- value_pattern_detection.pattern(values, pf=pf) ----")
+        print(" ", pat)
+        print("   CALL: pattern_to_string(pat, collapse_level=2)")
+        pat_str = pattern_to_string(pat, collapse_level=2)
+        print("   P1>> {}".format(pat_str))
+        print("-----------")
+
+def _pattern2(key, values, groups):
+    with Timer(key="p2-{}".format(key)) as t:
+        print("---- pattern2(values, max_pattern={}) ----".format(groups))
+        pm = pattern2(values, max_pattern=groups)
+        print("   P2>>  {}".format(pm.info()))
+        print("-----------")
+
 @demo.command()
 
 @click.option('-s', '--size', type=int, default=10)
 @click.option('-p', '--provider', type=str, default=None)
 @click.option('-m', '--method', type=str, default=None)
 @click.option('-l', '--local', type=str, default="en")
-
-def demo(size, provider, method, local):
+@click.option('-1', '--p1', is_flag=True, default= True)
+@click.option('-2', '--p2', is_flag=True, default= True)
+@click.option('-g', '--groups', type=int, default=2)
+def demo(size, provider, method, local, p1, p2, groups):
     """Showcase pattern generator based on mimesis data provider"""
 
     click.echo("datagenerator(local={}, size={}, provider={}, method={})".format(local, size, provider, method))
@@ -55,31 +78,11 @@ def demo(size, provider, method, local):
     for key, values in gen:
         print("\n-- {}".format(key))
         print_columns(values, columns=None, max_rows=4, indent=1)
-
-        with Timer(key=key) as t:
-            pat = value_pattern_detection.pattern(values, pf=pf)
-
-
-        print(" ",pat)
-        print("  CALL: pattern_to_string(pat, collapse_level=0)")
-        pat_str = pattern_to_string(pat, collapse_level=0)
-        print("   >> {}".format(pat_str))
-
-        print("  CALL: pattern_to_string(pat, collapse_level=1)")
-        pat_str = pattern_to_string(pat, collapse_level=1)
-        print("   >> {}".format(pat_str))
-
-        print("  CALL: pattern_to_string(pat, collapse_level=2)")
-        pat_str = pattern_to_string(pat, collapse_level=2)
-        print("   >> {}".format(pat_str))
-
-        print("  CALL: pattern_to_string( higher_level(pat), collapse_level=2)")
-        hl = higher_level(pat)
-        print("    ", hl)
-        hl_str = pattern_to_string(hl, collapse_level=2)
-        print("   >> {}".format(hl_str))
-
-        print(t.printStats(key=key))
+        if p1:
+            _pattern1( key, values)
+        if p2:
+            _pattern2( key, values, groups)
+        print(Timer.printStats(key=key))
 
     print("Overall timming stats")
-    print(t.printStats())
+    print(Timer.printStats())

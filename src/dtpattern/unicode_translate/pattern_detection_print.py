@@ -1,7 +1,7 @@
 
 from dtpattern.unicode_translate.translate import all_uc_to_ucname
 from dtpattern.unicode_translate.uc_models import FIX_COMB_SYM, VAR_COMB_SYM, FIX_SYMB, VAR_SYMB, UC_SYMBOLS, \
-    OPT_PATTERN
+    OPT_PATTERN, OPT_SYMB, SYMB_GROUP
 from multipledispatch import dispatch
 
 import structlog
@@ -158,23 +158,14 @@ class pattern_to_string_dispatch(object):
         s="({})#{}".format(pat_str,pat.count)
         return self.format(s)
 
-    # @dispatch(OPT_SYMB)
-    # def to_string(self, pat):
-    #     pat_str = self.to_string(pat.symbol)
-    #     if pat.len == 1:
-    #         return "({}) ".format(pat_str)
-    #     elif self.collapse_multi:
-    #         return "({}){} ".format(pat_str, pat.len)
-    #     else:
-    #         return "({}){} ".format(pat_str, self.fixed * (pat.len - 1))
-    #
-    # @dispatch(SYMB_GROUP)
-    # def to_string(self, pat):
-    #     pat_str=",".join([self.to_string(sym)  for sym in pat.symbols])
-    #     if pat.len == 1:
-    #         return "[{}] ".format(pat_str)
-    #     elif self.collapse_multi:
-    #         return "[{}]{} ".format(pat_str, pat.len)
-    #     else:
-    #         return "[{}]{} ".format(pat_str, self.fixed * (pat.len - 1))
+    @dispatch(OPT_SYMB)
+    def to_string(self, pat):
+        s = "({})#{}".format(self.to_string(pat.symbol), pat.len)
+        return self.format(s)
+
+    @dispatch(SYMB_GROUP)
+    def to_string(self, pat):
+        pat_str=",".join([self.to_string(sym)  for sym in pat.symbols])
+        return self.to_string(pat_str, pat.len)
+
 

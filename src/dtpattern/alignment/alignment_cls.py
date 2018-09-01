@@ -2,13 +2,14 @@ import functools
 
 
 from dtpattern.alignment.alignment_list import align_global, finalize, format_alignment2
-from dtpattern.timer import timer
+
 from dtpattern.unicode_translate.uc_models import FIX_SYMB
+from pyjuhelpers.timer import timer
 
 
 class Alignment(object):
 
-    def __init__(self, alpha, beta, translate=None, m=5, mm=-4, om=3, csetm=4,go=-15, ge=-1):
+    def __init__(self, alpha, beta, translate=None, m=6, mm=-4, om=3, csetm=4,go=-10, ge=-5):
 
         self.alpha=alpha
         self.beta=beta

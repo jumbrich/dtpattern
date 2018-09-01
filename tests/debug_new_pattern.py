@@ -2,12 +2,12 @@
 from csvmimesis.mimesis_data_providers import list_providers_methods, list_locals
 from csvmimesis.table_generator import create_data_provider_list
 from dtpattern.unicode_translate.uc_models import PATTERN
-from dtpattern import pattern_detection, dtpattern2, value_pattern_detection
+from dtpattern import dtpattern2, value_pattern_detection
 from dtpattern.unicode_translate.pattern_detection_print import pattern_to_string
 from dtpattern.unicode_translate.translate import translate_all, string_to_uc_level2, translate, higher_level
 import logging
 
-from dtpattern.value_pattern_detection import uc_agg
+from dtpattern.value_pattern_detection import uc_agg, pf
 from pyjuhelpers.logging import defaultConf
 from pyjuhelpers.timer import Timer
 
@@ -33,29 +33,29 @@ def datagenerator(local=None, provider=None, method=None, size=10, seed="ascd"):
                     print("Someing wrrong",e)
 
 
-def pattern1(key,values):
-    with Timer(key=key) as t:
-        pat = pattern_detection.pattern(values,max_opt_depth=2)
-        if isinstance(pat, PATTERN):
-            assert pat.count == size
-    print(t.printStats(key=key))
-
-
-    #print(subpattern_to_string(pat))
-
-    pat_str= pattern_to_string(pat,collapse_multi=False)
-    print("PAT>> {} {}".format(pat_str, pat))
-
-    hl= higher_level(pat)
-    hl_str=pattern_to_string(hl,collapse_multi=False)
-    print("HL>> {} {}".format(hl_str, hl))
-
-    if "Lu Ll" not in pat_str:
-       assert pat_str == hl_str
+# def pattern1(key,values):
+#     with Timer(key=key) as t:
+#         pat = pattern_detection.pattern(values,max_opt_depth=2)
+#         if isinstance(pat, PATTERN):
+#             assert pat.count == size
+#     print(t.printStats(key=key))
+#
+#
+#     #print(subpattern_to_string(pat))
+#
+#     pat_str= pattern_to_string(pat,collapse_multi=False)
+#     print("PAT>> {} {}".format(pat_str, pat))
+#
+#     hl= higher_level(pat)
+#     hl_str=pattern_to_string(hl,collapse_multi=False)
+#     print("HL>> {} {}".format(hl_str, hl))
+#
+#     if "Lu Ll" not in pat_str:
+#        assert pat_str == hl_str
 
 def pattern3(key,values):
     with Timer(key=key) as t:
-        pat = value_pattern_detection.pattern(values, pf=uc_agg)
+        pat = value_pattern_detection.pattern(values, pf=pf)
     print(t.printStats(key=key))
 
     print(pat)
@@ -80,10 +80,14 @@ def patter2(values,max_pattern=3):
 
 
 s="business.company"
+
 #s="business.copyright"
 #s="cryptographic.uuid"
 s=None#"address"
 #s="text.title"#"text.title"#"numbers.floats"#"business.company"#"internet.top_level_domain"
+
+
+s="person.social_media_profile"
 sp = s.split(".") if isinstance(s,str) and len(s)>1 else None
 provider= sp[0] if sp and len(sp)>0 else None
 method= sp[1] if sp and len(sp)==2 else None
@@ -114,7 +118,7 @@ datetime=[
 
 
 ]
-gen=datetime
+#gen=datetime
 
 
 max_pattern=2
@@ -134,7 +138,7 @@ for key, values in gen:
     # print(" L2: {}".format(L2))
 
 
-    #patter2(values,max_pattern=max_pattern)
+    patter2(values,max_pattern=max_pattern)
 
     pattern3(key,values)
 

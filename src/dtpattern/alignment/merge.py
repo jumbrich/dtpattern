@@ -18,7 +18,10 @@ class merge(object):
     def _merge(self, alpha, beta):
         #a list with the unique cset symbols
         l = list(set([self.translate(alpha), self.translate(beta)]))
-        return [FIX_SYMB(c) for c in l]
+        if len(l)>1:
+            return SYMB_GROUP([FIX_SYMB(c,1) for c in l],1)
+        else:
+            return FIX_SYMB(l[0],1)
 
     @dispatch(FIX_SYMB, str)
     def _merge(self, alpha, beta):
@@ -49,7 +52,24 @@ class merge(object):
                 m.append(_m)
         return SYMB_GROUP(list(set(m)),1)
 
+    @dispatch(FIX_SYMB, OPT_SYMB)
+    def _merge(self, alpha, beta):
+        return  self._merge(beta, alpha)
 
+    @dispatch(OPT_SYMB, FIX_SYMB)
+    def _merge(self, alpha, beta):
+        d = self._merge(alpha.symbol, beta)
+        return OPT_SYMB(d,alpha.len)
+
+    @dispatch(str, OPT_SYMB)
+    def _merge(self, alpha, beta):
+        return self._merge(beta, alpha)
+
+    @dispatch(OPT_SYMB, str)
+    def _merge(self, alpha, beta):
+        d = self._merge(alpha.symbol, beta)
+
+        return OPT_SYMB(d, alpha.len)
 
     def __call__(self, alpha, beta):
         score= self._merge(alpha,beta)

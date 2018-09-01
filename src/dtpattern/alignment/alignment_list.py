@@ -1,6 +1,7 @@
 
 from __future__ import print_function
 
+import itertools
 import warnings
 
 
@@ -75,14 +76,28 @@ class identity_match2(object):
     def identity_score(self, alpha, beta):
         return max([self.identity_score(sym, beta) for sym in alpha.symbols])
 
+    @dispatch(object, SYMB_GROUP)
+    def identity_score(self, alpha, beta):
+        return self.identity_score(beta, alpha)
+
 
     @dispatch(SYMB_GROUP, OPT_SYMB)
     def identity_score(self, alpha, beta):
         return max([self.identity_score(sym, beta) for sym in alpha.symbols])
 
+    @dispatch(OPT_SYMB,SYMB_GROUP)
+    def identity_score(self, alpha, beta):
+        return self.identity_score(beta, alpha)
+
     @dispatch(OPT_SYMB, OPT_SYMB)
     def identity_score(self, alpha, beta):
-        return max([self.identity_score(alpha,sym) for sym in beta.symbols])
+        return self.identity_score(alpha.symbol,beta.symbol)
+
+    @dispatch(SYMB_GROUP, SYMB_GROUP)
+    def identity_score(self, alpha, beta):
+        l = list(itertools.product(alpha.symbols, beta.symbols))
+        print(alpha, beta, l)
+        return max([self.identity_score(asym, bsym) for asym, bsym in l])
 
     # @dispatch(tuple, tuple)
     # def identity_score(self, alpha, beta):
@@ -1081,9 +1096,16 @@ class equals(object):
     def _equals(self, alpha, beta):
         return self._equals(alpha.symbol, beta)
 
+    @dispatch(object, SYMB_GROUP)
+    def _equals(self, alpha, beta):
+        return self._equals(beta, alpha)
     @dispatch(SYMB_GROUP, object)
     def _equals(self, alpha, beta):
         return any([self._equals(sym, beta) for sym in alpha.symbols])
+
+    @dispatch(OPT_SYMB,SYMB_GROUP)
+    def _equals(self, alpha, beta):
+        return self._equals(beta, alpha)
 
     @dispatch(SYMB_GROUP, OPT_SYMB)
     def _equals(self, alpha, beta):
@@ -1091,11 +1113,18 @@ class equals(object):
 
     @dispatch(OPT_SYMB, OPT_SYMB)
     def _equals(self, alpha, beta):
-        return self._equals(beta,alpha)
+        return self._equals(beta.symbol,alpha.symbol)
+
+    @dispatch(SYMB_GROUP, SYMB_GROUP)
+    def _equals(self, alpha, beta):
+        l = list(itertools.product(alpha.symbols, beta.symbols))
+        print(alpha, beta, l)
+        return any([self._equals(asym, bsym) for asym, bsym in l])
 
     def __call__(self, alpha, beta):
         score= self._equals(alpha,beta)
         return score
+
 
 
 #

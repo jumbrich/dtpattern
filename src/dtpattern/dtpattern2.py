@@ -129,10 +129,10 @@ class PatternFinder(object):
 
 
         _s_al = sorted(enumerate(_al), key=functools.cmp_to_key(compare), reverse=True)
-        s=""
-        for k in _s_al:
-            s+="\n"+"  pos:{} {}".format(k[0],reindent(k[1],5))
-        log.debug("[COMP_BEFORE] computed %s alignments %s", len(_s_al),s)
+        #s=""
+        #for k in _s_al:
+        #    s+="\n"+"  pos:{} {}".format(k[0],reindent(k[1],5))
+        #log.debug("[COMP_BEFORE] computed %s alignments %s", len(_s_al),s)
 
         merged=False
         best_align=_s_al[0][1]
@@ -175,10 +175,10 @@ class PatternFinder(object):
         _s_al = sorted(enumerate(_al), key=functools.cmp_to_key(compare), reverse=True)
 
         log.debug("[COMP] Compared %s to %s patterns", _pat, len(_al))
-        s = ""
-        for k in _s_al:
-            s += "\n" + "  pos:{} {}".format(k[0], reindent(k[1], 5))
-        log.debug("[COMP_BEFORE] computed %s alignments %s", len(_s_al), s)
+       # s = ""
+       # for k in _s_al:
+       #     s += "\n" + "  pos:{} {}".format(k[0], reindent(k[1], 5))
+       # log.debug("[COMP_BEFORE] computed %s alignments %s", len(_s_al), s)
 
 
         _idx, alignment = _s_al[0]
@@ -228,10 +228,10 @@ class PatternFinder(object):
         _s_al= sorted(enumerate(_al), key=functools.cmp_to_key(compare), reverse=True)
 
 
-        s=""
-        for k in _s_al:
-            s+="\n"+reindent(k[1],4)
-        log.debug("  Compared %s to %s patterns %s", value, len(_al),s)
+        #s=""
+        #for k in _s_al:
+        #    s+="\n"+reindent(k[1],4)
+        #log.debug("  Compared %s to %s patterns %s", value, len(_al),s)
 
 
         return _s_al[0]
